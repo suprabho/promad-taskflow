@@ -8,15 +8,39 @@ import React, {
   useEffect,
   useRef,
 } from "react";
-import { Task, TaskStatus, Priority, STATUS_LABELS, PRIORITY_LABELS } from "@/types/task";
+import { Task, TaskStatus, Priority, TaskType, STATUS_LABELS, PRIORITY_LABELS } from "@/types/task";
 import { User } from "@/types/user";
 import { supabase } from "@/lib/supabase";
+import { createNotification } from "@/hooks/use-notifications";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 type SortField = "name" | "due_date" | "priority" | "status";
 type SortDir = "asc" | "desc";
 
+export type Filters = {
+  search: string;
+  status: TaskStatus[];
+  priority: Priority[];
+  task_type: TaskType[];
+  assignee: string[];
+  due_from: string;
+  due_to: string;
+};
+
+const EMPTY_FILTERS: Filters = {
+  search: "",
+  status: [],
+  priority: [],
+  task_type: [],
+  assignee: [],
+  due_from: "",
+  due_to: "",
+};
+
 type TaskStore = {
+  currentUserId: string | null;
   tasks: Task[];
+  allTasks: Task[];
   users: User[];
   loading: boolean;
   connected: boolean;
@@ -25,6 +49,8 @@ type TaskStore = {
   sortField: SortField;
   sortDir: SortDir;
   myTasksOnly: boolean;
+  filters: Filters;
+  hasActiveFilters: boolean;
   selectTask: (id: string | null) => void;
   openDetail: (id: string) => void;
   closeDetail: () => void;
@@ -34,11 +60,14 @@ type TaskStore = {
   setSort: (field: SortField) => void;
   toggleMyTasks: () => void;
   getUserById: (id: string) => User | undefined;
+  setFilters: (filters: Partial<Filters>) => void;
+  clearFilters: () => void;
+  signOut: () => void;
 };
 
 const TaskContext = createContext<TaskStore | null>(null);
 
-const DEFAULT_USER_ID = "00000000-0000-0000-0000-000000000001";
+const FALLBACK_USER_ID = "00000000-0000-0000-0000-000000000001";
 
 const PRIORITY_ORDER: Record<Priority, number> = {
   urgent: 0,
@@ -56,6 +85,8 @@ const STATUS_ORDER_MAP: Record<TaskStatus, number> = {
 };
 
 export function TaskProvider({ children }: { children: React.ReactNode }) {
+  const { userId: currentUserId } = useCurrentUser();
+  const actorId = currentUserId || FALLBACK_USER_ID;
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +96,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const [sortField, setSortField] = useState<SortField>("priority");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [myTasksOnly, setMyTasksOnly] = useState(false);
+  const [filters, setFiltersState] = useState<Filters>(EMPTY_FILTERS);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   // --- Fetch initial data ---
@@ -183,7 +215,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       task_type: partial.task_type || "product_design",
       assignees: partial.assignees || [],
       workspace_id: "ws-1",
-      created_by: DEFAULT_USER_ID,
+      created_by: actorId,
       created_at: now,
       updated_at: now,
     };
@@ -196,7 +228,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     });
 
     return task;
-  }, []);
+  }, [actorId]);
 
   // Optimistic update — also logs activity for meaningful field changes
   const updateTask = useCallback((id: string, updates: Partial<Task>) => {
@@ -249,7 +281,19 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       const getNames = (ids: string[]) =>
         ids.map((uid) => users.find((u) => u.id === uid)?.name || "someone").join(", ");
 
-      if (added.length) activityActions.push(`assigned ${getNames(added)}`);
+      if (added.length) {
+        activityActions.push(`assigned ${getNames(added)}`);
+        // Notify newly assigned users
+        for (const userId of added) {
+          createNotification({
+            user_id: userId,
+            task_id: id,
+            type: "assigned",
+            message: `You were assigned to "${oldTask.name || "Untitled task"}"`,
+            actorId,
+          });
+        }
+      }
       if (removed.length) activityActions.push(`unassigned ${getNames(removed)}`);
     }
 
@@ -257,14 +301,14 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       supabase.from("activity_logs").insert({
         id: crypto.randomUUID(),
         task_id: id,
-        actor_id: DEFAULT_USER_ID,
+        actor_id: actorId,
         action,
         created_at: new Date().toISOString(),
       }).then(({ error }) => {
         if (error) console.error("Failed to log activity:", error.message);
       });
     }
-  }, [tasks, users]);
+  }, [tasks, users, actorId]);
 
   // Optimistic delete
   const deleteTask = useCallback(
@@ -307,9 +351,73 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     [users]
   );
 
-  const filtered = myTasksOnly
-    ? tasks.filter((t) => t.assignees.includes(DEFAULT_USER_ID))
-    : tasks;
+  const setFilters = useCallback((partial: Partial<Filters>) => {
+    setFiltersState((prev) => ({ ...prev, ...partial }));
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setFiltersState(EMPTY_FILTERS);
+  }, []);
+
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+  }, []);
+
+  const hasActiveFilters =
+    filters.search !== "" ||
+    filters.status.length > 0 ||
+    filters.priority.length > 0 ||
+    filters.task_type.length > 0 ||
+    filters.assignee.length > 0 ||
+    filters.due_from !== "" ||
+    filters.due_to !== "";
+
+  // Apply all filters
+  let filtered = tasks;
+
+  if (myTasksOnly) {
+    filtered = filtered.filter((t) => t.assignees.includes(actorId));
+  }
+
+  if (filters.search) {
+    const q = filters.search.toLowerCase();
+    filtered = filtered.filter(
+      (t) =>
+        t.name.toLowerCase().includes(q) ||
+        t.details.toLowerCase().includes(q)
+    );
+  }
+
+  if (filters.status.length > 0) {
+    filtered = filtered.filter((t) => filters.status.includes(t.status));
+  }
+
+  if (filters.priority.length > 0) {
+    filtered = filtered.filter((t) => filters.priority.includes(t.priority));
+  }
+
+  if (filters.task_type.length > 0) {
+    filtered = filtered.filter((t) => filters.task_type.includes(t.task_type));
+  }
+
+  if (filters.assignee.length > 0) {
+    filtered = filtered.filter((t) =>
+      t.assignees.some((a) => filters.assignee.includes(a))
+    );
+  }
+
+  if (filters.due_from) {
+    filtered = filtered.filter(
+      (t) => t.due_date && t.due_date >= filters.due_from
+    );
+  }
+
+  if (filters.due_to) {
+    filtered = filtered.filter(
+      (t) => t.due_date && t.due_date <= filters.due_to
+    );
+  }
 
   const sortedTasks = [...filtered].sort((a, b) => {
     let cmp = 0;
@@ -336,7 +444,9 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   return (
     <TaskContext.Provider
       value={{
+        currentUserId,
         tasks: sortedTasks,
+        allTasks: tasks,
         users,
         loading,
         connected,
@@ -345,6 +455,8 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         sortField,
         sortDir,
         myTasksOnly,
+        filters,
+        hasActiveFilters,
         selectTask,
         openDetail,
         closeDetail,
@@ -354,6 +466,9 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         setSort,
         toggleMyTasks,
         getUserById,
+        setFilters,
+        clearFilters,
+        signOut,
       }}
     >
       {children}

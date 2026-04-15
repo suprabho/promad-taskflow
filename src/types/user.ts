@@ -24,3 +24,15 @@ export type ActivityLog = {
   action: string;
   created_at: string;
 };
+
+export type NotificationType = "assigned" | "commented" | "due_soon";
+
+export type Notification = {
+  id: string;
+  user_id: string;
+  task_id: string;
+  type: NotificationType;
+  message: string;
+  read: boolean;
+  created_at: string;
+};

@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Comment } from "@/types/user";
 import { supabase } from "@/lib/supabase";
-
-const DEFAULT_USER_ID = "00000000-0000-0000-0000-000000000001";
+import { createNotification } from "@/hooks/use-notifications";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 export function useComments(taskId: string | null) {
+  const { userId: currentUserId } = useCurrentUser();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -79,13 +80,13 @@ export function useComments(taskId: string | null) {
   }, [taskId]);
 
   const addComment = useCallback(
-    (body: string) => {
-      if (!taskId || !body.trim()) return;
+    (body: string, taskAssignees?: string[], taskName?: string) => {
+      if (!taskId || !body.trim() || !currentUserId) return;
 
       const optimistic: Comment = {
         id: crypto.randomUUID(),
         task_id: taskId,
-        author_id: DEFAULT_USER_ID,
+        author_id: currentUserId,
         body: body.trim(),
         created_at: new Date().toISOString(),
       };
@@ -98,8 +99,21 @@ export function useComments(taskId: string | null) {
         .then(({ error }) => {
           if (error) console.error("Failed to add comment:", error.message);
         });
+
+      // Notify assignees about the new comment
+      if (taskAssignees) {
+        for (const userId of taskAssignees) {
+          createNotification({
+            user_id: userId,
+            task_id: taskId,
+            type: "commented",
+            message: `New comment on "${taskName || "a task"}": "${body.trim().slice(0, 60)}${body.trim().length > 60 ? "..." : ""}"`,
+            actorId: currentUserId,
+          });
+        }
+      }
     },
-    [taskId]
+    [taskId, currentUserId]
   );
 
   const deleteComment = useCallback((commentId: string) => {
