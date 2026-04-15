@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Plus, WifiHigh, WifiSlash } from "@phosphor-icons/react";
+import { Plus, WifiHigh, WifiSlash, UserCircle } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { useTaskStore } from "@/store/task-store";
@@ -15,7 +15,7 @@ const pageTitles: Record<string, string> = {
 
 export function Header() {
   const pathname = usePathname();
-  const { addTask, openDetail, connected } = useTaskStore();
+  const { addTask, openDetail, connected, myTasksOnly, toggleMyTasks } = useTaskStore();
   const title = pageTitles[pathname] || "Tasks";
   const showViewToggle = pathname === "/" || pathname === "/board";
 
@@ -46,10 +46,24 @@ export function Header() {
         )}
 
         {showViewToggle && (
-          <Button size="sm" onClick={handleNewTask}>
-            <Plus weight="bold" className="h-3.5 w-3.5" />
-            New task
-          </Button>
+          <>
+            <button
+              onClick={toggleMyTasks}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                myTasksOnly
+                  ? "bg-indigo-100 text-indigo-700"
+                  : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              }`}
+              title="Toggle my tasks"
+            >
+              <UserCircle weight={myTasksOnly ? "fill" : "regular"} className="h-4 w-4" />
+              My tasks
+            </button>
+            <Button size="sm" onClick={handleNewTask}>
+              <Plus weight="bold" className="h-3.5 w-3.5" />
+              New task
+            </Button>
+          </>
         )}
 
         <Avatar name="Suprabho Dhenki" size="sm" />

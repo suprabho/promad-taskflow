@@ -71,8 +71,9 @@ create trigger set_updated_at
   before update on public.tasks
   for each row execute function public.handle_updated_at();
 
--- 7. Enable Realtime on the tasks table
+-- 7. Enable Realtime on the tasks and comments tables
 alter publication supabase_realtime add table public.tasks;
+alter publication supabase_realtime add table public.comments;
 
 -- 8. Row Level Security (permissive for now — tighten after auth is wired up)
 alter table public.users enable row level security;

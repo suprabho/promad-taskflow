@@ -6,7 +6,9 @@ import { useTaskStore } from "@/store/task-store";
 import { Input, Textarea } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
+import { AssigneePicker } from "@/components/tasks/assignee-picker";
+import { CommentThread } from "@/components/tasks/comment-thread";
+import { ActivityFeed } from "@/components/tasks/activity-feed";
 import {
   TaskStatus,
   Priority,
@@ -19,7 +21,6 @@ import {
 export function TaskDetail() {
   const {
     tasks,
-    users,
     selectedTaskId,
     detailOpen,
     closeDetail,
@@ -49,14 +50,6 @@ export function TaskDetail() {
     value: v,
     label: l,
   }));
-
-  const assigneeUsers = task.assignees
-    .map((id) => users.find((u) => u.id === id))
-    .filter(Boolean);
-
-  const unassignedUsers = users.filter(
-    (u) => !task.assignees.includes(u.id)
-  );
 
   return (
     <>
@@ -146,65 +139,19 @@ export function TaskDetail() {
           </div>
 
           {/* Assignees */}
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
-              Assignees
-            </label>
-            <div className="space-y-2">
-              {assigneeUsers.map(
-                (u) =>
-                  u && (
-                    <div
-                      key={u.id}
-                      className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Avatar
-                          name={u.name}
-                          src={u.avatar_url}
-                          size="sm"
-                        />
-                        <span className="text-sm text-gray-700">
-                          {u.name}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() =>
-                          updateTask(task.id, {
-                            assignees: task.assignees.filter(
-                              (id) => id !== u.id
-                            ),
-                          })
-                        }
-                        className="text-xs text-gray-400 hover:text-red-500"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  )
-              )}
+          <AssigneePicker
+            assignees={task.assignees}
+            onChange={(assignees) => updateTask(task.id, { assignees })}
+          />
 
-              {unassignedUsers.length > 0 && (
-                <select
-                  className="w-full rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm text-gray-500 focus:border-indigo-500 focus:outline-none bg-white"
-                  value=""
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      updateTask(task.id, {
-                        assignees: [...task.assignees, e.target.value],
-                      });
-                    }
-                  }}
-                >
-                  <option value="">+ Add assignee</option>
-                  {unassignedUsers.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
+          {/* Comments */}
+          <div className="border-t border-gray-200 pt-4">
+            <CommentThread taskId={task.id} />
+          </div>
+
+          {/* Activity */}
+          <div className="border-t border-gray-200 pt-4">
+            <ActivityFeed taskId={task.id} />
           </div>
 
           {/* Metadata */}
