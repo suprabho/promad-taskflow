@@ -19,10 +19,19 @@ create index if not exists idx_notifications_user on public.notifications(user_i
 create index if not exists idx_notifications_unread on public.notifications(user_id, read) where read = false;
 
 -- 3. Enable Realtime on notifications
-alter publication supabase_realtime add table public.notifications;
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'notifications'
+  ) then
+    alter publication supabase_realtime add table public.notifications;
+  end if;
+end $$;
 
 -- 4. RLS (permissive for now — tighten after auth)
 alter table public.notifications enable row level security;
+drop policy if exists "Allow all on notifications" on public.notifications;
 create policy "Allow all on notifications" on public.notifications for all using (true) with check (true);
 
 -- 5. Full-text search index on tasks (for global search performance)

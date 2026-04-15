@@ -72,8 +72,22 @@ create trigger set_updated_at
   for each row execute function public.handle_updated_at();
 
 -- 7. Enable Realtime on the tasks and comments tables
-alter publication supabase_realtime add table public.tasks;
-alter publication supabase_realtime add table public.comments;
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'tasks'
+  ) then
+    alter publication supabase_realtime add table public.tasks;
+  end if;
+
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'comments'
+  ) then
+    alter publication supabase_realtime add table public.comments;
+  end if;
+end $$;
 
 -- 8. Row Level Security (permissive for now — tighten after auth is wired up)
 alter table public.users enable row level security;
@@ -81,14 +95,18 @@ alter table public.tasks enable row level security;
 alter table public.comments enable row level security;
 alter table public.activity_logs enable row level security;
 
+drop policy if exists "Allow all on users" on public.users;
 create policy "Allow all on users" on public.users for all using (true) with check (true);
+drop policy if exists "Allow all on tasks" on public.tasks;
 create policy "Allow all on tasks" on public.tasks for all using (true) with check (true);
+drop policy if exists "Allow all on comments" on public.comments;
 create policy "Allow all on comments" on public.comments for all using (true) with check (true);
+drop policy if exists "Allow all on activity_logs" on public.activity_logs;
 create policy "Allow all on activity_logs" on public.activity_logs for all using (true) with check (true);
 
 -- 9. Seed users
 insert into public.users (id, name, email, role)
 values
-  ('00000000-0000-0000-0000-000000000001', 'Suprabho Dhenki', 'suprabho@promad.design', 'admin'),
+  ('00000000-0000-0000-0000-000000000001', 'Supro', 'supro@promad.design', 'admin'),
   ('00000000-0000-0000-0000-000000000002', 'Vanshika Garg', 'vanshika@promad.design', 'member')
 on conflict (email) do nothing;
