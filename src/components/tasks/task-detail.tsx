@@ -60,7 +60,7 @@ export function TaskDetail() {
       />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 z-50 h-screen w-full max-w-lg overflow-y-auto border-l border-gray-200 bg-white shadow-xl animate-in slide-in-from-right">
+      <div className="fixed right-0 top-0 z-50 h-screen w-full sm:max-w-lg overflow-y-auto border-l border-gray-200 bg-white shadow-xl animate-in slide-in-from-right">
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
           <h2 className="text-lg font-semibold text-gray-900">Task details</h2>

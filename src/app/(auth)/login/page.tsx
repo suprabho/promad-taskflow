@@ -1,27 +1,91 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
+import { GithubLogo, GoogleLogo } from "@phosphor-icons/react";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleEmailLogin(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    const form = new FormData(e.currentTarget);
+    const email = form.get("email") as string;
+    const password = form.get("password") as string;
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+      return;
+    }
+
+    router.push("/");
+    router.refresh();
+  }
+
+  async function handleOAuth(provider: "github" | "google") {
+    setError(null);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) setError(error.message);
+  }
+
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
       <h2 className="text-lg font-semibold text-gray-900 mb-1">Welcome back</h2>
-      <p className="text-sm text-gray-500 mb-5">
-        Sign in to your workspace
-      </p>
+      <p className="text-sm text-gray-500 mb-5">Sign in to your workspace</p>
 
-      <form
-        className="space-y-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          // Auth will be wired up with Clerk/NextAuth
-          window.location.href = "/";
-        }}
-      >
+      {/* OAuth */}
+      <div className="space-y-2 mb-5">
+        <button
+          onClick={() => handleOAuth("google")}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          <GoogleLogo weight="bold" className="h-4 w-4" />
+          Continue with Google
+        </button>
+        <button
+          onClick={() => handleOAuth("github")}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          <GithubLogo weight="bold" className="h-4 w-4" />
+          Continue with GitHub
+        </button>
+      </div>
+
+      {/* Divider */}
+      <div className="relative mb-5">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-200" />
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-white px-2 text-gray-400">or</span>
+        </div>
+      </div>
+
+      {/* Email/password */}
+      <form className="space-y-4" onSubmit={handleEmailLogin}>
         <Input
           id="email"
+          name="email"
           label="Email"
           type="email"
           placeholder="you@team.com"
@@ -29,13 +93,21 @@ export default function LoginPage() {
         />
         <Input
           id="password"
+          name="password"
           label="Password"
           type="password"
           placeholder="••••••••"
           required
         />
-        <Button type="submit" className="w-full">
-          Sign in
+
+        {error && (
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+            {error}
+          </p>
+        )}
+
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? "Signing in..." : "Sign in"}
         </Button>
       </form>
 

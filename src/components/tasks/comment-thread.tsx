@@ -6,13 +6,12 @@ import { useComments } from "@/hooks/use-comments";
 import { useTaskStore } from "@/store/task-store";
 import { Avatar } from "@/components/ui/avatar";
 
-const DEFAULT_USER_ID = "00000000-0000-0000-0000-000000000001";
-
 export function CommentThread({ taskId }: { taskId: string }) {
   const { comments, loading, addComment, deleteComment } = useComments(taskId);
-  const { getUserById } = useTaskStore();
+  const { getUserById, tasks, currentUserId } = useTaskStore();
   const [body, setBody] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const task = tasks.find((t) => t.id === taskId);
 
   // Auto-scroll to bottom when new comments arrive
   useEffect(() => {
@@ -24,7 +23,7 @@ export function CommentThread({ taskId }: { taskId: string }) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!body.trim()) return;
-    addComment(body);
+    addComment(body, task?.assignees, task?.name);
     setBody("");
   }
 
@@ -56,7 +55,7 @@ export function CommentThread({ taskId }: { taskId: string }) {
 
         {comments.map((comment) => {
           const author = getUserById(comment.author_id);
-          const isOwn = comment.author_id === DEFAULT_USER_ID;
+          const isOwn = comment.author_id === currentUserId;
 
           return (
             <div
