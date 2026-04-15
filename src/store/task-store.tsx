@@ -8,7 +8,7 @@ import React, {
   useEffect,
   useRef,
 } from "react";
-import { Task, TaskStatus, Priority } from "@/types/task";
+import { Task, TaskStatus, Priority, STATUS_LABELS, PRIORITY_LABELS } from "@/types/task";
 import { User } from "@/types/user";
 import { supabase } from "@/lib/supabase";
 
@@ -24,6 +24,7 @@ type TaskStore = {
   detailOpen: boolean;
   sortField: SortField;
   sortDir: SortDir;
+  myTasksOnly: boolean;
   selectTask: (id: string | null) => void;
   openDetail: (id: string) => void;
   closeDetail: () => void;
@@ -31,6 +32,7 @@ type TaskStore = {
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
   setSort: (field: SortField) => void;
+  toggleMyTasks: () => void;
   getUserById: (id: string) => User | undefined;
 };
 
@@ -62,6 +64,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [sortField, setSortField] = useState<SortField>("priority");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [myTasksOnly, setMyTasksOnly] = useState(false);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   // --- Fetch initial data ---
@@ -195,8 +198,11 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     return task;
   }, []);
 
-  // Optimistic update
+  // Optimistic update — also logs activity for meaningful field changes
   const updateTask = useCallback((id: string, updates: Partial<Task>) => {
+    // Grab the old task to diff against
+    const oldTask = tasks.find((t) => t.id === id);
+
     setTasks((prev) =>
       prev.map((t) =>
         t.id === id
@@ -220,7 +226,45 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       .then(({ error }) => {
         if (error) console.error("Failed to update task:", error.message);
       });
-  }, []);
+
+    // Log activity for meaningful changes
+    if (!oldTask) return;
+
+    const activityActions: string[] = [];
+
+    if (updates.status && updates.status !== oldTask.status) {
+      activityActions.push(
+        `changed status to ${STATUS_LABELS[updates.status]}`
+      );
+    }
+    if (updates.priority && updates.priority !== oldTask.priority) {
+      activityActions.push(
+        `changed priority to ${PRIORITY_LABELS[updates.priority]}`
+      );
+    }
+    if (updates.assignees && JSON.stringify(updates.assignees) !== JSON.stringify(oldTask.assignees)) {
+      const newAssignees = updates.assignees;
+      const added = newAssignees.filter((a) => !oldTask.assignees.includes(a));
+      const removed = oldTask.assignees.filter((a) => !newAssignees.includes(a));
+      const getNames = (ids: string[]) =>
+        ids.map((uid) => users.find((u) => u.id === uid)?.name || "someone").join(", ");
+
+      if (added.length) activityActions.push(`assigned ${getNames(added)}`);
+      if (removed.length) activityActions.push(`unassigned ${getNames(removed)}`);
+    }
+
+    for (const action of activityActions) {
+      supabase.from("activity_logs").insert({
+        id: crypto.randomUUID(),
+        task_id: id,
+        actor_id: DEFAULT_USER_ID,
+        action,
+        created_at: new Date().toISOString(),
+      }).then(({ error }) => {
+        if (error) console.error("Failed to log activity:", error.message);
+      });
+    }
+  }, [tasks, users]);
 
   // Optimistic delete
   const deleteTask = useCallback(
@@ -254,12 +298,20 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     [sortField]
   );
 
+  const toggleMyTasks = useCallback(() => {
+    setMyTasksOnly((prev) => !prev);
+  }, []);
+
   const getUserById = useCallback(
     (id: string) => users.find((u) => u.id === id),
     [users]
   );
 
-  const sortedTasks = [...tasks].sort((a, b) => {
+  const filtered = myTasksOnly
+    ? tasks.filter((t) => t.assignees.includes(DEFAULT_USER_ID))
+    : tasks;
+
+  const sortedTasks = [...filtered].sort((a, b) => {
     let cmp = 0;
     switch (sortField) {
       case "name":
@@ -292,6 +344,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         detailOpen,
         sortField,
         sortDir,
+        myTasksOnly,
         selectTask,
         openDetail,
         closeDetail,
@@ -299,6 +352,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         updateTask,
         deleteTask,
         setSort,
+        toggleMyTasks,
         getUserById,
       }}
     >
