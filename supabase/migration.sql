@@ -104,7 +104,15 @@ create policy "Allow all on comments" on public.comments for all using (true) wi
 drop policy if exists "Allow all on activity_logs" on public.activity_logs;
 create policy "Allow all on activity_logs" on public.activity_logs for all using (true) with check (true);
 
--- 9. Seed users
+-- 9. Migrate suprabho@promad.design → supro@promad.design
+-- Update existing row in-place so all foreign keys (tasks, comments, activity_logs) follow automatically.
+-- Only runs if the old email still exists (skips if migration was already applied).
+update public.users
+  set name = 'Supro', email = 'supro@promad.design'
+  where email = 'suprabho@promad.design'
+    and not exists (select 1 from public.users where email = 'supro@promad.design');
+
+-- 10. Seed users (no-op for rows that already exist)
 insert into public.users (id, name, email, role)
 values
   ('00000000-0000-0000-0000-000000000001', 'Supro', 'supro@promad.design', 'admin'),
