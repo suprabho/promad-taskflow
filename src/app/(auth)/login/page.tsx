@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
-import { GithubLogo, GoogleLogo } from "@phosphor-icons/react";
+import { GoogleLogo } from "@phosphor-icons/react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -37,7 +37,7 @@ export default function LoginPage() {
     router.refresh();
   }
 
-  async function handleOAuth(provider: "github" | "google") {
+  async function handleOAuth(provider: "google") {
     setError(null);
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
@@ -61,13 +61,6 @@ export default function LoginPage() {
         >
           <GoogleLogo weight="bold" className="h-4 w-4" />
           Continue with Google
-        </button>
-        <button
-          onClick={() => handleOAuth("github")}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          <GithubLogo weight="bold" className="h-4 w-4" />
-          Continue with GitHub
         </button>
       </div>
 

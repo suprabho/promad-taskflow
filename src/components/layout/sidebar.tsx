@@ -10,6 +10,7 @@ import {
   Users,
   X,
 } from "@phosphor-icons/react";
+import { useTaskStore } from "@/store/task-store";
 
 const navItems = [
   { href: "/", label: "List", icon: CheckSquare },
@@ -18,6 +19,7 @@ const navItems = [
 ];
 
 export function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
+  const { users } = useTaskStore();
   const pathname = usePathname();
 
   return (
@@ -88,7 +90,7 @@ export function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => voi
         <div className="border-t border-gray-200 px-3 py-3">
           <div className="flex items-center gap-2 px-3 py-2 text-sm text-gray-500">
             <Users weight="regular" className="h-4 w-4" />
-            <span>3 members</span>
+            <span>{users.length} members</span>
           </div>
         </div>
       </aside>
