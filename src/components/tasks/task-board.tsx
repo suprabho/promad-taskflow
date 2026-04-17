@@ -62,7 +62,7 @@ export function TaskBoard() {
       onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
     >
-      <div className="flex gap-4 overflow-x-auto pb-4 px-1">
+      <div className="flex flex-col gap-4 pb-4 px-1 md:flex-row md:overflow-x-auto">
         {STATUS_ORDER.map((status) => (
           <BoardColumn
             key={status}

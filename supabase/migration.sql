@@ -105,12 +105,28 @@ drop policy if exists "Allow all on activity_logs" on public.activity_logs;
 create policy "Allow all on activity_logs" on public.activity_logs for all using (true) with check (true);
 
 -- 9. Migrate suprabho@promad.design → supro@promad.design
--- Update existing row in-place so all foreign keys (tasks, comments, activity_logs) follow automatically.
--- Only runs if the old email still exists (skips if migration was already applied).
-update public.users
-  set name = 'Supro', email = 'supro@promad.design'
-  where email = 'suprabho@promad.design'
-    and not exists (select 1 from public.users where email = 'supro@promad.design');
+-- Transfer all items from the old user to the new user, then delete the old user.
+do $$
+declare
+  old_id uuid;
+  new_id uuid;
+begin
+  select id into old_id from public.users where email = 'suprabho@promad.design';
+  select id into new_id from public.users where email = 'supro@promad.design';
+
+  if old_id is not null and new_id is not null then
+    -- Both exist: move items from old → new, then delete old
+    update public.tasks set created_by = new_id where created_by = old_id;
+    update public.tasks set assignees = array_replace(assignees, old_id, new_id);
+    update public.comments set author_id = new_id where author_id = old_id;
+    update public.activity_logs set actor_id = new_id where actor_id = old_id;
+    update public.notifications set user_id = new_id where user_id = old_id;
+    delete from public.users where id = old_id;
+  elsif old_id is not null and new_id is null then
+    -- Only old exists: rename in-place
+    update public.users set name = 'Supro', email = 'supro@promad.design' where id = old_id;
+  end if;
+end $$;
 
 -- 10. Seed users (no-op for rows that already exist)
 insert into public.users (id, name, email, role)

@@ -27,7 +27,7 @@ export function BoardColumn({
 
   return (
     <div
-      className={`flex min-h-[200px] w-72 flex-shrink-0 flex-col rounded-xl bg-gray-50 transition-colors ${
+      className={`flex min-h-[200px] w-full flex-col rounded-xl bg-gray-50 transition-colors md:w-72 md:flex-shrink-0 ${
         isOver ? "bg-indigo-50 ring-2 ring-indigo-200" : ""
       }`}
     >

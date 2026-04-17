@@ -9,6 +9,7 @@ import {
   Lightning,
   Users,
   X,
+  ArrowSquareOut,
 } from "@phosphor-icons/react";
 import { useTaskStore } from "@/store/task-store";
 
@@ -16,6 +17,12 @@ const navItems = [
   { href: "/", label: "List", icon: CheckSquare },
   { href: "/board", label: "Board", icon: Kanban },
   { href: "/settings", label: "Settings", icon: Gear },
+];
+
+const internalTools = [
+  { href: "https://aura.promad.design", label: "Aura" },
+  { href: "https://invoice.promad.design", label: "Invoice" },
+  { href: "https://trip.promad.design", label: "Trip" },
 ];
 
 export function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
@@ -83,6 +90,26 @@ export function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => voi
                 </li>
               );
             })}
+          </ul>
+
+          <div className="mt-6 px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            Internal tools
+          </div>
+          <ul className="space-y-1">
+            {internalTools.map((item) => (
+              <li key={item.href}>
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={onClose}
+                  className="flex items-center justify-between gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                >
+                  {item.label}
+                  <ArrowSquareOut weight="regular" className="h-4 w-4 text-gray-400" />
+                </a>
+              </li>
+            ))}
           </ul>
         </nav>
 
