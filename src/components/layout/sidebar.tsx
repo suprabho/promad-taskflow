@@ -23,6 +23,7 @@ const internalTools = [
   { href: "https://aura.promad.design", label: "Aura" },
   { href: "https://invoice.promad.design", label: "Invoice" },
   { href: "https://trip.promad.design", label: "Trip" },
+  { href: "https://colors.promad.design", label: "Colors" },
 ];
 
 export function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {

@@ -29,6 +29,25 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Claude Code skills
+
+This project ships with a [Claude Code](https://claude.com/claude-code) skill that lets you file tasks from natural language.
+
+### `create-task`
+
+Creates a row in the Supabase `tasks` table from a prompt.
+
+**Where it lives:** [`.claude/skills/create-task/SKILL.md`](.claude/skills/create-task/SKILL.md) — auto-discovered by Claude Code when you run it from the project root.
+
+**How to use it** — open Claude Code in this directory and either:
+
+- Invoke it explicitly: `/create-task fix the crash on the board page when dragging a done card`
+- Or just ask in natural language: `create a task to redesign the sidebar, high priority, due next Friday`
+
+Claude will parse the prompt into `name`, `details`, `priority`, `task_type`, `due_date`, and `status` (with sensible defaults), then `POST` to Supabase using the credentials in `.env.local`. It reports the created task's `id` on success.
+
+**Requirements:** `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` must be set in `.env.local`, and the `tasks` table must allow inserts from the anon role (see [`supabase/migration.sql`](supabase/migration.sql)).
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
