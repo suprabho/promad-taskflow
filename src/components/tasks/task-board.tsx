@@ -175,7 +175,7 @@ export function TaskBoard() {
         onDragEnd={handleDragEnd}
         onDragOver={handleDragOver}
       >
-        <div className="flex flex-col gap-4 pb-4 px-1 md:flex-row md:overflow-x-auto">
+        <div className="flex flex-col gap-4 pb-4 px-1 md:flex-row md:overflow-x-auto md:pb-3">
           {columns.map((col) => (
             <BoardColumn
               key={col.id}
