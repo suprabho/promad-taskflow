@@ -70,7 +70,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <KeyboardShortcuts />
       <div className="flex min-h-screen">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className="flex-1 lg:ml-56">
+        <div className="flex-1 min-w-0 lg:ml-56">
           <Header onMenuToggle={() => setSidebarOpen(true)} />
           <main className="p-4 sm:p-6">
             <ErrorBoundary>{children}</ErrorBoundary>
