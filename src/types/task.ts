@@ -26,6 +26,7 @@ export type Task = {
   due_date: string | null;
   priority: Priority;
   task_type: TaskType;
+  project: string | null;
   assignees: string[];
   workspace_id: string;
   created_by: string;

@@ -138,6 +138,18 @@ export function TaskDetail() {
             />
           </div>
 
+          {/* Project */}
+          <Input
+            label="Project"
+            value={task.project ?? ""}
+            placeholder="e.g. Merkle Science, Kidzovo, Begin..."
+            onChange={(e) =>
+              updateTask(task.id, {
+                project: e.target.value.trim() ? e.target.value : null,
+              })
+            }
+          />
+
           {/* Assignees */}
           <AssigneePicker
             assignees={task.assignees}
