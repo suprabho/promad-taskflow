@@ -5,25 +5,21 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Task, TaskStatus, STATUS_LABELS } from "@/types/task";
+import { Task } from "@/types/task";
 import { TaskCard } from "./task-card";
 
-const columnColors: Record<TaskStatus, string> = {
-  todo: "bg-gray-400",
-  in_progress: "bg-yellow-400",
-  review: "bg-purple-400",
-  done: "bg-green-400",
-  paused: "bg-slate-400",
-};
-
 export function BoardColumn({
-  status,
+  id,
+  label,
+  dotColor,
   tasks,
 }: {
-  status: TaskStatus;
+  id: string;
+  label: string;
+  dotColor: string;
   tasks: Task[];
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: status });
+  const { setNodeRef, isOver } = useDroppable({ id });
 
   return (
     <div
@@ -33,9 +29,9 @@ export function BoardColumn({
     >
       {/* Column header */}
       <div className="flex items-center gap-2 px-3 py-3">
-        <div className={`h-2 w-2 rounded-full ${columnColors[status]}`} />
-        <span className="text-sm font-semibold text-gray-700">
-          {STATUS_LABELS[status]}
+        <div className={`h-2 w-2 rounded-full ${dotColor}`} />
+        <span className="truncate text-sm font-semibold text-gray-700">
+          {label}
         </span>
         <span className="ml-auto text-xs font-medium text-gray-400">
           {tasks.length}

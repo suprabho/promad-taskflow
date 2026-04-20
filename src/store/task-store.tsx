@@ -213,6 +213,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       due_date: partial.due_date || null,
       priority: partial.priority || "medium",
       task_type: partial.task_type || "product_design",
+      project: partial.project ?? null,
       assignees: partial.assignees || [],
       workspace_id: "ws-1",
       created_by: actorId,
@@ -244,7 +245,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     );
 
     // Only send mutable fields to Supabase
-    const mutableKeys = ["name", "details", "status", "due_date", "priority", "task_type", "assignees"];
+    const mutableKeys = ["name", "details", "status", "due_date", "priority", "task_type", "project", "assignees"];
     const dbUpdates: Record<string, unknown> = {};
     for (const key of mutableKeys) {
       if (key in updates) {
