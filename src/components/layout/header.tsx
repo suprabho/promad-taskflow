@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { useTaskStore } from "@/store/task-store";
 import { ViewToggle } from "./view-toggle";
+import { ViewsMenu } from "./views-menu";
 import { NotificationBell } from "./notification-bell";
 
 const pageTitles: Record<string, string> = {
@@ -42,6 +43,7 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
         )}
         <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
         {showViewToggle && <ViewToggle />}
+        {showViewToggle && <ViewsMenu />}
       </div>
 
       <div className="flex items-center gap-3">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -11,10 +11,8 @@ import {
   closestCorners,
 } from "@dnd-kit/core";
 import { Task, TaskStatus, STATUS_ORDER, STATUS_LABELS } from "@/types/task";
-import { useTaskStore } from "@/store/task-store";
+import { useTaskStore, GroupBy } from "@/store/task-store";
 import { BoardColumn } from "./board-column";
-
-type GroupBy = "status" | "project";
 
 const NO_PROJECT = "__none__";
 
@@ -48,8 +46,7 @@ function projectColor(project: string) {
 }
 
 export function TaskBoard() {
-  const { tasks, updateTask } = useTaskStore();
-  const [groupBy, setGroupBy] = useState<GroupBy>("status");
+  const { tasks, updateTask, groupBy, setGroupBy } = useTaskStore();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
