@@ -14,8 +14,10 @@ import { supabase } from "@/lib/supabase";
 import { createNotification } from "@/hooks/use-notifications";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
-type SortField = "name" | "due_date" | "priority" | "status";
-type SortDir = "asc" | "desc";
+export type SortField = "name" | "due_date" | "priority" | "status";
+export type SortDir = "asc" | "desc";
+export type ViewMode = "list" | "board";
+export type GroupBy = "status" | "project";
 
 export type Filters = {
   search: string;
@@ -27,6 +29,18 @@ export type Filters = {
   due_to: string;
 };
 
+export type SavedView = {
+  id: string;
+  name: string;
+  mode: ViewMode;
+  group_by: GroupBy;
+  sort_field: SortField;
+  sort_dir: SortDir;
+  my_tasks_only: boolean;
+  filters: Filters;
+  is_builtin?: boolean;
+};
+
 const EMPTY_FILTERS: Filters = {
   search: "",
   status: [],
@@ -36,6 +50,23 @@ const EMPTY_FILTERS: Filters = {
   due_from: "",
   due_to: "",
 };
+
+const BUILTIN_VIEWS: SavedView[] = [
+  {
+    id: "builtin:my-open-tasks",
+    name: "My open tasks",
+    mode: "list",
+    group_by: "status",
+    sort_field: "priority",
+    sort_dir: "asc",
+    my_tasks_only: true,
+    filters: {
+      ...EMPTY_FILTERS,
+      status: ["todo", "in_progress", "review"],
+    },
+    is_builtin: true,
+  },
+];
 
 type TaskStore = {
   currentUserId: string | null;
@@ -51,6 +82,9 @@ type TaskStore = {
   myTasksOnly: boolean;
   filters: Filters;
   hasActiveFilters: boolean;
+  groupBy: GroupBy;
+  savedViews: SavedView[];
+  activeViewId: string | null;
   selectTask: (id: string | null) => void;
   openDetail: (id: string) => void;
   closeDetail: () => void;
@@ -62,6 +96,10 @@ type TaskStore = {
   getUserById: (id: string) => User | undefined;
   setFilters: (filters: Partial<Filters>) => void;
   clearFilters: () => void;
+  setGroupBy: (g: GroupBy) => void;
+  applyView: (view: SavedView) => { mode: ViewMode };
+  saveView: (name: string, mode: ViewMode) => Promise<void>;
+  deleteView: (id: string) => Promise<void>;
   signOut: () => void;
 };
 
@@ -97,6 +135,9 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [myTasksOnly, setMyTasksOnly] = useState(false);
   const [filters, setFiltersState] = useState<Filters>(EMPTY_FILTERS);
+  const [groupBy, setGroupByState] = useState<GroupBy>("status");
+  const [remoteViews, setRemoteViews] = useState<SavedView[]>([]);
+  const [activeViewId, setActiveViewId] = useState<string | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   // --- Fetch initial data ---
@@ -104,13 +145,18 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     async function fetchData() {
       setLoading(true);
 
-      const [tasksRes, usersRes] = await Promise.all([
+      const [tasksRes, usersRes, viewsRes] = await Promise.all([
         supabase
           .from("tasks")
           .select("*")
           .eq("workspace_id", "ws-1")
           .order("created_at", { ascending: false }),
         supabase.from("users").select("*"),
+        supabase
+          .from("saved_views")
+          .select("*")
+          .eq("workspace_id", "ws-1")
+          .order("created_at", { ascending: true }),
       ]);
 
       if (tasksRes.data) {
@@ -127,10 +173,83 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         setUsers(usersRes.data);
       }
 
+      if (viewsRes.data) {
+        setRemoteViews(
+          viewsRes.data.map((v) => ({
+            id: v.id,
+            name: v.name,
+            mode: v.mode,
+            group_by: v.group_by,
+            sort_field: v.sort_field,
+            sort_dir: v.sort_dir,
+            my_tasks_only: v.my_tasks_only,
+            filters: { ...EMPTY_FILTERS, ...(v.filters || {}) },
+          }))
+        );
+      }
+
       setLoading(false);
     }
 
     fetchData();
+  }, []);
+
+  // --- Realtime: saved_views ---
+  useEffect(() => {
+    const channel = supabase
+      .channel("saved-views-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "saved_views",
+          filter: "workspace_id=eq.ws-1",
+        },
+        (payload) => {
+          const { eventType } = payload;
+
+          if (eventType === "INSERT" || eventType === "UPDATE") {
+            const row = payload.new as {
+              id: string;
+              name: string;
+              mode: ViewMode;
+              group_by: GroupBy;
+              sort_field: SortField;
+              sort_dir: SortDir;
+              my_tasks_only: boolean;
+              filters: Partial<Filters> | null;
+            };
+            const view: SavedView = {
+              id: row.id,
+              name: row.name,
+              mode: row.mode,
+              group_by: row.group_by,
+              sort_field: row.sort_field,
+              sort_dir: row.sort_dir,
+              my_tasks_only: row.my_tasks_only,
+              filters: { ...EMPTY_FILTERS, ...(row.filters || {}) },
+            };
+            setRemoteViews((prev) => {
+              const idx = prev.findIndex((v) => v.id === view.id);
+              if (idx === -1) return [...prev, view];
+              const next = [...prev];
+              next[idx] = view;
+              return next;
+            });
+          }
+
+          if (eventType === "DELETE") {
+            const old = payload.old as { id: string };
+            setRemoteViews((prev) => prev.filter((v) => v.id !== old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // --- Realtime subscription ---
@@ -339,12 +458,14 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         setSortField(field);
         setSortDir("asc");
       }
+      setActiveViewId(null);
     },
     [sortField]
   );
 
   const toggleMyTasks = useCallback(() => {
     setMyTasksOnly((prev) => !prev);
+    setActiveViewId(null);
   }, []);
 
   const getUserById = useCallback(
@@ -354,11 +475,67 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
   const setFilters = useCallback((partial: Partial<Filters>) => {
     setFiltersState((prev) => ({ ...prev, ...partial }));
+    setActiveViewId(null);
   }, []);
 
   const clearFilters = useCallback(() => {
     setFiltersState(EMPTY_FILTERS);
+    setActiveViewId(null);
   }, []);
+
+  const setGroupBy = useCallback((g: GroupBy) => {
+    setGroupByState(g);
+    setActiveViewId(null);
+  }, []);
+
+  const applyView = useCallback((view: SavedView) => {
+    setFiltersState(view.filters);
+    setSortField(view.sort_field);
+    setSortDir(view.sort_dir);
+    setMyTasksOnly(view.my_tasks_only);
+    setGroupByState(view.group_by);
+    setActiveViewId(view.id);
+    return { mode: view.mode };
+  }, []);
+
+  const saveView = useCallback(
+    async (name: string, mode: ViewMode) => {
+      const id = crypto.randomUUID();
+      const row = {
+        id,
+        workspace_id: "ws-1",
+        name,
+        mode,
+        group_by: groupBy,
+        sort_field: sortField,
+        sort_dir: sortDir,
+        my_tasks_only: myTasksOnly,
+        filters,
+        created_by: actorId,
+      };
+      setRemoteViews((prev) => [
+        ...prev,
+        { id, name, mode, group_by: groupBy, sort_field: sortField, sort_dir: sortDir, my_tasks_only: myTasksOnly, filters },
+      ]);
+      setActiveViewId(id);
+      const { error } = await supabase.from("saved_views").insert(row);
+      if (error) {
+        console.error("Failed to save view:", error.message);
+        setRemoteViews((prev) => prev.filter((v) => v.id !== id));
+      }
+    },
+    [filters, sortField, sortDir, myTasksOnly, groupBy, actorId]
+  );
+
+  const deleteView = useCallback(
+    async (id: string) => {
+      setRemoteViews((prev) => prev.filter((v) => v.id !== id));
+      setActiveViewId((cur) => (cur === id ? null : cur));
+      const { error } = await supabase.from("saved_views").delete().eq("id", id);
+      if (error) console.error("Failed to delete view:", error.message);
+    },
+    []
+  );
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
@@ -442,6 +619,8 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     return sortDir === "asc" ? cmp : -cmp;
   });
 
+  const savedViews = [...BUILTIN_VIEWS, ...remoteViews];
+
   return (
     <TaskContext.Provider
       value={{
@@ -458,6 +637,9 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         myTasksOnly,
         filters,
         hasActiveFilters,
+        groupBy,
+        savedViews,
+        activeViewId,
         selectTask,
         openDetail,
         closeDetail,
@@ -469,6 +651,10 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         getUserById,
         setFilters,
         clearFilters,
+        setGroupBy,
+        applyView,
+        saveView,
+        deleteView,
         signOut,
       }}
     >
