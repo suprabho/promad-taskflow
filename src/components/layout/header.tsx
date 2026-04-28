@@ -6,7 +6,6 @@ import { Plus, WifiHigh, WifiSlash, UserCircle, List, SignOut } from "@phosphor-
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { useTaskStore } from "@/store/task-store";
-import { ViewToggle } from "./view-toggle";
 import { ViewsMenu } from "./views-menu";
 import { NotificationBell } from "./notification-bell";
 
@@ -42,12 +41,7 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
           </button>
         )}
         <h1 className="truncate text-lg font-semibold text-gray-900">{title}</h1>
-        {showViewToggle && <ViewToggle />}
-        {showViewToggle && (
-          <div className="hidden md:block">
-            <ViewsMenu />
-          </div>
-        )}
+        {showViewToggle && <ViewsMenu />}
       </div>
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
