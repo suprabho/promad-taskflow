@@ -102,23 +102,23 @@ function FilterBarInner() {
   const assigneeOptions = users.map((u) => ({ value: u.id, label: u.name }));
 
   return (
-    <div className="flex flex-col gap-3 pb-4">
+    <div className="flex flex-col flex-wrap md:flex-row justify-between gap-3 pb-4">
       {/* Search */}
-      <div className="relative">
-        <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+      <div className="p-2 flex flex-row border items-center rounded-lg border-gray-300 bg-white focus-within:border-indigo-500 focus-within:outline-none focus:ring-1 focus-within:ring-indigo-500 overflow-hidden gap-2">
+        <MagnifyingGlass className="flex h-4 w-4 text-gray-400" />
         <input
           type="text"
           placeholder="Search tasks..."
           value={filters.search}
           onChange={(e) => setFilters({ search: e.target.value })}
-          className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="w-full text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
         />
         {filters.search && (
           <button
             onClick={() => setFilters({ search: "" })}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-gray-400 hover:text-gray-600"
+            className="flex right-2 rounded p-0.5 text-gray-400 hover:text-gray-600"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-4 w-4" />
           </button>
         )}
       </div>

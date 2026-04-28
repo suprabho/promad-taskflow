@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
@@ -8,10 +8,40 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { GoogleLogo } from "@phosphor-icons/react";
 
+const BYPASS_ENABLED = process.env.NEXT_PUBLIC_AUTH_BYPASS === "1";
+const BYPASS_EMAIL = process.env.NEXT_PUBLIC_AUTH_BYPASS_EMAIL;
+const BYPASS_PASSWORD = process.env.NEXT_PUBLIC_AUTH_BYPASS_PASSWORD;
+
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [bypassActive, setBypassActive] = useState(BYPASS_ENABLED);
+  const bypassRan = useRef(false);
+
+  useEffect(() => {
+    if (!BYPASS_ENABLED || bypassRan.current) return;
+    if (!BYPASS_EMAIL || !BYPASS_PASSWORD) {
+      setError("Auth bypass is on but NEXT_PUBLIC_AUTH_BYPASS_EMAIL/PASSWORD are not set.");
+      setBypassActive(false);
+      return;
+    }
+    bypassRan.current = true;
+
+    (async () => {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: BYPASS_EMAIL,
+        password: BYPASS_PASSWORD,
+      });
+      if (error) {
+        setError(`Auth bypass sign-in failed: ${error.message}`);
+        setBypassActive(false);
+        return;
+      }
+      router.push("/");
+      router.refresh();
+    })();
+  }, [router]);
 
   async function handleEmailLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -46,6 +76,24 @@ export default function LoginPage() {
       },
     });
     if (error) setError(error.message);
+  }
+
+  if (bypassActive) {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-amber-900 mb-1">
+          Auth bypass active
+        </h2>
+        <p className="text-sm text-amber-800">
+          Signing in as {BYPASS_EMAIL}…
+        </p>
+        {error && (
+          <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+            {error}
+          </p>
+        )}
+      </div>
+    );
   }
 
   return (
