@@ -30,10 +30,18 @@ export function TaskDetail() {
 
   const task = tasks.find((t) => t.id === selectedTaskId);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [name, setName] = useState(task?.name ?? "");
+  const [details, setDetails] = useState(task?.details ?? "");
+  const [project, setProject] = useState(task?.project ?? "");
 
-  // Reset delete confirmation when task changes
   useEffect(() => {
     setConfirmDelete(false);
+    if (task) {
+      setName(task.name);
+      setDetails(task.details);
+      setProject(task.project ?? "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTaskId]);
 
   if (!detailOpen || !task) return null;
@@ -76,18 +84,24 @@ export function TaskDetail() {
           {/* Name */}
           <Input
             label="Task name"
-            value={task.name}
+            value={name}
             placeholder="Enter task name..."
-            onChange={(e) => updateTask(task.id, { name: e.target.value })}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={() => {
+              if (name !== task.name) updateTask(task.id, { name });
+            }}
           />
 
           {/* Details */}
           <Textarea
             label="Details"
-            value={task.details}
+            value={details}
             placeholder="Add a description..."
             rows={4}
-            onChange={(e) => updateTask(task.id, { details: e.target.value })}
+            onChange={(e) => setDetails(e.target.value)}
+            onBlur={() => {
+              if (details !== task.details) updateTask(task.id, { details });
+            }}
           />
 
           {/* Status & Priority row */}
@@ -141,13 +155,13 @@ export function TaskDetail() {
           {/* Project */}
           <Input
             label="Project"
-            value={task.project ?? ""}
+            value={project}
             placeholder="e.g. Merkle Science, Kidzovo, Begin..."
-            onChange={(e) =>
-              updateTask(task.id, {
-                project: e.target.value.trim() ? e.target.value : null,
-              })
-            }
+            onChange={(e) => setProject(e.target.value)}
+            onBlur={() => {
+              const next = project.trim() ? project : null;
+              if (next !== task.project) updateTask(task.id, { project: next });
+            }}
           />
 
           {/* Assignees */}

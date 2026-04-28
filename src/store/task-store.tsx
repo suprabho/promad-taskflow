@@ -139,6 +139,10 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const [remoteViews, setRemoteViews] = useState<SavedView[]>([]);
   const [activeViewId, setActiveViewId] = useState<string | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const tasksRef = useRef<Task[]>(tasks);
+  const usersRef = useRef<User[]>(users);
+  tasksRef.current = tasks;
+  usersRef.current = users;
 
   // --- Fetch initial data ---
   useEffect(() => {
@@ -353,7 +357,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   // Optimistic update — also logs activity for meaningful field changes
   const updateTask = useCallback((id: string, updates: Partial<Task>) => {
     // Grab the old task to diff against
-    const oldTask = tasks.find((t) => t.id === id);
+    const oldTask = tasksRef.current.find((t) => t.id === id);
 
     setTasks((prev) =>
       prev.map((t) =>
@@ -399,7 +403,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       const added = newAssignees.filter((a) => !oldTask.assignees.includes(a));
       const removed = oldTask.assignees.filter((a) => !newAssignees.includes(a));
       const getNames = (ids: string[]) =>
-        ids.map((uid) => users.find((u) => u.id === uid)?.name || "someone").join(", ");
+        ids.map((uid) => usersRef.current.find((u) => u.id === uid)?.name || "someone").join(", ");
 
       if (added.length) {
         activityActions.push(`assigned ${getNames(added)}`);
@@ -428,7 +432,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         if (error) console.error("Failed to log activity:", error.message);
       });
     }
-  }, [tasks, users, actorId]);
+  }, [actorId]);
 
   // Optimistic delete
   const deleteTask = useCallback(
