@@ -31,30 +31,34 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
   }
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-gray-200 bg-white/80 backdrop-blur-sm px-4 sm:px-6">
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-20 flex h-14 w-full items-center justify-between gap-2 border-b border-gray-200 bg-white/80 backdrop-blur-sm px-3 sm:px-6">
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
         {onMenuToggle && (
           <button
             onClick={onMenuToggle}
-            className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 lg:hidden"
+            className="shrink-0 rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 lg:hidden"
           >
             <List weight="bold" className="h-5 w-5" />
           </button>
         )}
-        <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
+        <h1 className="truncate text-lg font-semibold text-gray-900">{title}</h1>
         {showViewToggle && <ViewToggle />}
-        {showViewToggle && <ViewsMenu />}
+        {showViewToggle && (
+          <div className="hidden md:block">
+            <ViewsMenu />
+          </div>
+        )}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         {/* Live indicator */}
         {connected ? (
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-600">
+          <div className="hidden lg:flex items-center gap-1.5 text-xs text-emerald-600">
             <WifiHigh weight="bold" className="h-3.5 w-3.5" />
             <span>Live</span>
           </div>
         ) : (
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400">
+          <div className="hidden lg:flex items-center gap-1.5 text-xs text-gray-400">
             <WifiSlash weight="bold" className="h-3.5 w-3.5" />
             <span>Connecting</span>
           </div>
@@ -64,7 +68,7 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
           <>
             <button
               onClick={toggleMyTasks}
-              className={`hidden sm:inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+              className={`hidden md:inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
                 myTasksOnly
                   ? "bg-indigo-100 text-indigo-700"
                   : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
