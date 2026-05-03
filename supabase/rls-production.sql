@@ -10,6 +10,7 @@ drop policy if exists "Allow all on tasks" on public.tasks;
 drop policy if exists "Allow all on comments" on public.comments;
 drop policy if exists "Allow all on activity_logs" on public.activity_logs;
 drop policy if exists "Allow all on notifications" on public.notifications;
+drop policy if exists "Allow all on saved_views" on public.saved_views;
 
 -- Users: can read all, can only update own profile
 create policy "Users can read all users"
@@ -57,3 +58,16 @@ create policy "System can insert notifications"
 
 create policy "Users can update own notifications"
   on public.notifications for update using (auth.uid() = user_id);
+
+-- Saved views: workspace-scoped, anyone can read, creators manage their own
+create policy "Anyone can read saved views"
+  on public.saved_views for select using (true);
+
+create policy "Authenticated users can insert saved views"
+  on public.saved_views for insert with check (auth.uid() = created_by);
+
+create policy "Creators can update own saved views"
+  on public.saved_views for update using (auth.uid() = created_by);
+
+create policy "Creators can delete own saved views"
+  on public.saved_views for delete using (auth.uid() = created_by);

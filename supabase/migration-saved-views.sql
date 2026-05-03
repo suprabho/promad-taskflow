@@ -19,6 +19,10 @@ create table if not exists public.saved_views (
 
 create index if not exists idx_saved_views_workspace on public.saved_views(workspace_id);
 
+alter table public.saved_views enable row level security;
+drop policy if exists "Allow all on saved_views" on public.saved_views;
+create policy "Allow all on saved_views" on public.saved_views for all using (true) with check (true);
+
 -- Enable Realtime so multi-user sessions see new views immediately
 do $$
 begin
