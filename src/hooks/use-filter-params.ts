@@ -55,6 +55,8 @@ export function useFilterParams(
     if (initialized.current) return;
     initialized.current = true;
 
+    if (pathname.startsWith("/views/")) return;
+
     const parsed = parseFiltersFromParams(searchParams);
     if (Object.keys(parsed).length > 0) {
       setFilters(parsed);
@@ -65,6 +67,7 @@ export function useFilterParams(
   // On filter change: push to URL
   useEffect(() => {
     if (!initialized.current) return;
+    if (pathname.startsWith("/views/")) return;
 
     const params = filtersToParams(filters);
     const qs = params.toString();

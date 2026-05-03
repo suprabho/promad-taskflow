@@ -17,11 +17,15 @@ const pageTitles: Record<string, string> = {
 
 export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const pathname = usePathname();
-  const { addTask, openDetail, connected, myTasksOnly, toggleMyTasks, currentUserId, users, signOut } = useTaskStore();
+  const { addTask, openDetail, connected, myTasksOnly, toggleMyTasks, currentUserId, users, signOut, savedViews, activeViewId } = useTaskStore();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const title = pageTitles[pathname] || "Tasks";
-  const showViewToggle = pathname === "/" || pathname === "/board";
+  const onViewRoute = pathname.startsWith("/views/");
+  const activeView = savedViews.find((v) => v.id === activeViewId);
+  const title = onViewRoute
+    ? activeView?.name || "View"
+    : pageTitles[pathname] || "Tasks";
+  const showViewToggle = pathname === "/" || pathname === "/board" || onViewRoute;
   const currentUser = currentUserId ? users.find((u) => u.id === currentUserId) : null;
 
   function handleNewTask() {
