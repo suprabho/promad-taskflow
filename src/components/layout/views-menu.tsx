@@ -4,12 +4,11 @@ import { useState, useRef, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Bookmark, CaretDown, Check, Plus, Trash, X } from "@phosphor-icons/react";
 import { useTaskStore, SavedView, ViewMode } from "@/store/task-store";
-import { filtersToParams } from "@/hooks/use-filter-params";
 
 export function ViewsMenu() {
   const pathname = usePathname();
   const router = useRouter();
-  const { savedViews, activeViewId, applyView, saveView, deleteView } = useTaskStore();
+  const { savedViews, activeViewId, saveView, deleteView } = useTaskStore();
 
   const [open, setOpen] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
@@ -17,8 +16,13 @@ export function ViewsMenu() {
   const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const currentMode: ViewMode = pathname === "/board" ? "board" : "list";
   const activeView = savedViews.find((v) => v.id === activeViewId);
+  const currentMode: ViewMode =
+    pathname === "/board"
+      ? "board"
+      : pathname.startsWith("/views/") && activeView
+      ? activeView.mode
+      : "list";
   const label = activeView ? activeView.name : "Views";
 
   useEffect(() => {
@@ -30,12 +34,8 @@ export function ViewsMenu() {
   }, [saveOpen]);
 
   function handleApply(view: SavedView) {
-    const { mode } = applyView(view);
     setOpen(false);
-
-    const qs = filtersToParams(view.filters).toString();
-    const target = mode === "board" ? "/board" : "/";
-    router.push(qs ? `${target}?${qs}` : target);
+    router.push(`/views/${view.id}`);
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -43,10 +43,11 @@ export function ViewsMenu() {
     const trimmed = name.trim();
     if (!trimmed || saving) return;
     setSaving(true);
-    await saveView(trimmed, currentMode);
+    const id = await saveView(trimmed, currentMode);
     setSaving(false);
     setSaveOpen(false);
     setOpen(false);
+    router.push(`/views/${id}`);
   }
 
   async function handleDelete(e: React.MouseEvent, id: string) {
