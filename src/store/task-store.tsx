@@ -53,7 +53,7 @@ const EMPTY_FILTERS: Filters = {
 
 const BUILTIN_VIEWS: SavedView[] = [
   {
-    id: "builtin:my-open-tasks",
+    id: "my-open-tasks",
     name: "My open tasks",
     mode: "list",
     group_by: "status",
@@ -98,7 +98,7 @@ type TaskStore = {
   clearFilters: () => void;
   setGroupBy: (g: GroupBy) => void;
   applyView: (view: SavedView) => { mode: ViewMode };
-  saveView: (name: string, mode: ViewMode) => Promise<void>;
+  saveView: (name: string, mode: ViewMode) => Promise<string>;
   deleteView: (id: string) => Promise<void>;
   signOut: () => void;
 };
@@ -521,12 +521,12 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         { id, name, mode, group_by: groupBy, sort_field: sortField, sort_dir: sortDir, my_tasks_only: myTasksOnly, filters },
       ]);
-      setActiveViewId(id);
       const { error } = await supabase.from("saved_views").insert(row);
       if (error) {
         console.error("Failed to save view:", error.message);
         setRemoteViews((prev) => prev.filter((v) => v.id !== id));
       }
+      return id;
     },
     [filters, sortField, sortDir, myTasksOnly, groupBy, actorId]
   );
