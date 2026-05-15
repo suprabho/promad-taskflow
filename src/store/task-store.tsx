@@ -16,7 +16,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 
 export type SortField = "name" | "due_date" | "priority" | "status";
 export type SortDir = "asc" | "desc";
-export type ViewMode = "list" | "board";
+export type ViewMode = "list" | "board" | "calendar";
 export type GroupBy = "status" | "project";
 
 export type Filters = {

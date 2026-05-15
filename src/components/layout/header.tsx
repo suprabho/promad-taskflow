@@ -12,6 +12,7 @@ import { NotificationBell } from "./notification-bell";
 const pageTitles: Record<string, string> = {
   "/": "Tasks",
   "/board": "Board",
+  "/calendar": "Calendar",
   "/settings": "Settings",
 };
 
@@ -25,7 +26,11 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const title = onViewRoute
     ? activeView?.name || "View"
     : pageTitles[pathname] || "Tasks";
-  const showViewToggle = pathname === "/" || pathname === "/board" || onViewRoute;
+  const showViewToggle =
+    pathname === "/" ||
+    pathname === "/board" ||
+    pathname === "/calendar" ||
+    onViewRoute;
   const currentUser = currentUserId ? users.find((u) => u.id === currentUserId) : null;
 
   function handleNewTask() {

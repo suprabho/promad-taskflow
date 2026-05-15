@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useTaskStore } from "@/store/task-store";
 import { TaskList } from "@/components/tasks/task-list";
 import { TaskBoard } from "@/components/tasks/task-board";
+import { TaskCalendar } from "@/components/tasks/task-calendar";
 import { FilterBar } from "@/components/tasks/filter-bar";
 import { filtersToParams } from "@/hooks/use-filter-params";
 
@@ -31,7 +32,12 @@ function ViewPageInner() {
       return;
     }
     if (lastAppliedIdRef.current === view.id && activeViewId !== view.id) {
-      const target = view.mode === "board" ? "/board" : "/";
+      const target =
+        view.mode === "board"
+          ? "/board"
+          : view.mode === "calendar"
+          ? "/calendar"
+          : "/";
       const qs = filtersToParams(filters).toString();
       router.replace(qs ? `${target}?${qs}` : target);
     }
@@ -42,7 +48,13 @@ function ViewPageInner() {
   return (
     <>
       <FilterBar />
-      {view.mode === "board" ? <TaskBoard /> : <TaskList />}
+      {view.mode === "board" ? (
+        <TaskBoard />
+      ) : view.mode === "calendar" ? (
+        <TaskCalendar />
+      ) : (
+        <TaskList />
+      )}
     </>
   );
 }

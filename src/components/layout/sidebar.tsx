@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  CalendarBlank,
   CheckSquare,
   Kanban,
   Gear,
@@ -16,6 +17,7 @@ import { useTaskStore } from "@/store/task-store";
 const navItems = [
   { href: "/", label: "List", icon: CheckSquare },
   { href: "/board", label: "Board", icon: Kanban },
+  { href: "/calendar", label: "Calendar", icon: CalendarBlank },
   { href: "/settings", label: "Settings", icon: Gear },
 ];
 
