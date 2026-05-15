@@ -32,7 +32,12 @@ function ViewPageInner() {
       return;
     }
     if (lastAppliedIdRef.current === view.id && activeViewId !== view.id) {
-      const target = view.mode === "board" ? "/board" : "/";
+      const target =
+        view.mode === "board"
+          ? "/board"
+          : view.mode === "calendar"
+          ? "/calendar"
+          : "/";
       const qs = filtersToParams(filters).toString();
       router.replace(qs ? `${target}?${qs}` : target);
     }

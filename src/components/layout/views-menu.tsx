@@ -21,6 +21,8 @@ export function ViewsMenu() {
   const currentMode: ViewMode =
     pathname === "/board"
       ? "board"
+      : pathname === "/calendar"
+      ? "calendar"
       : pathname.startsWith("/views/") && activeView
       ? activeView.mode
       : "list";
