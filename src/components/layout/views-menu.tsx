@@ -13,6 +13,7 @@ export function ViewsMenu() {
   const [open, setOpen] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const [name, setName] = useState("");
+  const [saveMode, setSaveMode] = useState<ViewMode>("list");
   const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -27,10 +28,12 @@ export function ViewsMenu() {
 
   useEffect(() => {
     if (saveOpen) {
+      setSaveMode(currentMode);
       requestAnimationFrame(() => inputRef.current?.focus());
     } else {
       setName("");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [saveOpen]);
 
   function handleApply(view: SavedView) {
@@ -43,7 +46,7 @@ export function ViewsMenu() {
     const trimmed = name.trim();
     if (!trimmed || saving) return;
     setSaving(true);
-    const id = await saveView(trimmed, currentMode);
+    const id = await saveView(trimmed, saveMode);
     setSaving(false);
     setSaveOpen(false);
     setOpen(false);
@@ -119,29 +122,47 @@ export function ViewsMenu() {
 
             <div className="border-t border-gray-100 p-1">
               {saveOpen ? (
-                <form onSubmit={handleSave} className="flex items-center gap-1 p-1">
-                  <input
-                    ref={inputRef}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="View name"
-                    className="flex-1 rounded-md border border-gray-300 px-2 py-1.5 text-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    maxLength={60}
-                  />
-                  <button
-                    type="submit"
-                    disabled={!name.trim() || saving}
-                    className="rounded-md bg-indigo-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSaveOpen(false)}
-                    className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+                <form onSubmit={handleSave} className="flex flex-col gap-1.5 p-1">
+                  <div className="inline-flex w-full rounded-md border border-gray-200 bg-white p-0.5">
+                    {(["list", "board", "calendar"] as ViewMode[]).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setSaveMode(m)}
+                        className={`flex-1 rounded px-2 py-1 text-[11px] font-medium capitalize transition-colors ${
+                          saveMode === m
+                            ? "bg-gray-900 text-white"
+                            : "text-gray-600 hover:bg-gray-100"
+                        }`}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <input
+                      ref={inputRef}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="View name"
+                      className="flex-1 rounded-md border border-gray-300 px-2 py-1.5 text-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      maxLength={60}
+                    />
+                    <button
+                      type="submit"
+                      disabled={!name.trim() || saving}
+                      className="rounded-md bg-indigo-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSaveOpen(false)}
+                      className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </form>
               ) : (
                 <button
