@@ -20,7 +20,7 @@ import {
 
 export function TaskDetail() {
   const {
-    tasks,
+    allTasks,
     selectedTaskId,
     detailOpen,
     closeDetail,
@@ -28,7 +28,7 @@ export function TaskDetail() {
     deleteTask,
   } = useTaskStore();
 
-  const task = tasks.find((t) => t.id === selectedTaskId);
+  const task = allTasks.find((t) => t.id === selectedTaskId);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [name, setName] = useState(task?.name ?? "");
   const [details, setDetails] = useState(task?.details ?? "");
