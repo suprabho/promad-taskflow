@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Trash } from "@phosphor-icons/react";
+import { X, Trash, Link as LinkIcon, Check } from "@phosphor-icons/react";
 import { useTaskStore } from "@/store/task-store";
 import { Input, Textarea } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -30,12 +30,14 @@ export function TaskDetail() {
 
   const task = tasks.find((t) => t.id === selectedTaskId);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [name, setName] = useState(task?.name ?? "");
   const [details, setDetails] = useState(task?.details ?? "");
   const [project, setProject] = useState(task?.project ?? "");
 
   useEffect(() => {
     setConfirmDelete(false);
+    setCopied(false);
     if (task) {
       setName(task.name);
       setDetails(task.details);
@@ -43,6 +45,18 @@ export function TaskDetail() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTaskId]);
+
+  async function copyLink() {
+    if (!task) return;
+    const url = `${window.location.origin}/tasks/${task.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // ignored — clipboard unavailable
+    }
+  }
 
   if (!detailOpen || !task) return null;
 
@@ -72,12 +86,31 @@ export function TaskDetail() {
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
           <h2 className="text-lg font-semibold text-gray-900">Task details</h2>
-          <button
-            onClick={closeDetail}
-            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-          >
-            <X weight="bold" className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={copyLink}
+              title={copied ? "Link copied" : "Copy link to task"}
+              className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+            >
+              {copied ? (
+                <>
+                  <Check weight="bold" className="h-4 w-4 text-green-600" />
+                  <span className="text-green-600">Copied</span>
+                </>
+              ) : (
+                <>
+                  <LinkIcon weight="bold" className="h-4 w-4" />
+                  <span>Copy link</span>
+                </>
+              )}
+            </button>
+            <button
+              onClick={closeDetail}
+              className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            >
+              <X weight="bold" className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         <div className="space-y-5 px-6 py-5">
