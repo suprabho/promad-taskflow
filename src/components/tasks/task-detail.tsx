@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, Trash, Link as LinkIcon, Check } from "@phosphor-icons/react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useTaskStore } from "@/store/task-store";
 import { Input, Textarea } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -17,6 +19,94 @@ import {
   PRIORITY_LABELS,
   TASK_TYPE_LABELS,
 } from "@/types/task";
+
+const MARKDOWN_COMPONENTS = {
+  h1: (p: { children?: React.ReactNode }) => (
+    <h1 className="mb-1.5 mt-3 text-lg font-semibold text-gray-900 first:mt-0">
+      {p.children}
+    </h1>
+  ),
+  h2: (p: { children?: React.ReactNode }) => (
+    <h2 className="mb-1.5 mt-3 text-base font-semibold text-gray-900 first:mt-0">
+      {p.children}
+    </h2>
+  ),
+  h3: (p: { children?: React.ReactNode }) => (
+    <h3 className="mb-1 mt-2 text-sm font-semibold text-gray-900 first:mt-0">
+      {p.children}
+    </h3>
+  ),
+  p: (p: { children?: React.ReactNode }) => (
+    <p className="my-1.5 text-sm text-gray-700 first:mt-0 last:mb-0">
+      {p.children}
+    </p>
+  ),
+  ul: (p: { children?: React.ReactNode }) => (
+    <ul className="my-1.5 list-disc space-y-0.5 pl-5 text-sm text-gray-700">
+      {p.children}
+    </ul>
+  ),
+  ol: (p: { children?: React.ReactNode }) => (
+    <ol className="my-1.5 list-decimal space-y-0.5 pl-5 text-sm text-gray-700">
+      {p.children}
+    </ol>
+  ),
+  a: (p: { href?: string; children?: React.ReactNode }) => (
+    <a
+      href={p.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-indigo-600 hover:underline"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {p.children}
+    </a>
+  ),
+  code: (p: { children?: React.ReactNode; className?: string }) => {
+    const isBlock = p.className?.startsWith("language-");
+    return isBlock ? (
+      <code className="block font-mono text-xs text-gray-800">
+        {p.children}
+      </code>
+    ) : (
+      <code className="rounded bg-gray-100 px-1 py-0.5 font-mono text-[0.85em] text-gray-800">
+        {p.children}
+      </code>
+    );
+  },
+  pre: (p: { children?: React.ReactNode }) => (
+    <pre className="my-2 overflow-x-auto rounded bg-gray-50 p-2 font-mono text-xs">
+      {p.children}
+    </pre>
+  ),
+  blockquote: (p: { children?: React.ReactNode }) => (
+    <blockquote className="my-1.5 border-l-2 border-gray-300 pl-3 italic text-gray-600">
+      {p.children}
+    </blockquote>
+  ),
+  hr: () => <hr className="my-3 border-gray-200" />,
+  strong: (p: { children?: React.ReactNode }) => (
+    <strong className="font-semibold text-gray-900">{p.children}</strong>
+  ),
+  em: (p: { children?: React.ReactNode }) => (
+    <em className="italic">{p.children}</em>
+  ),
+  table: (p: { children?: React.ReactNode }) => (
+    <div className="my-2 overflow-x-auto">
+      <table className="w-full border-collapse text-sm text-gray-700">
+        {p.children}
+      </table>
+    </div>
+  ),
+  th: (p: { children?: React.ReactNode }) => (
+    <th className="border border-gray-200 bg-gray-50 px-2 py-1 text-left font-semibold">
+      {p.children}
+    </th>
+  ),
+  td: (p: { children?: React.ReactNode }) => (
+    <td className="border border-gray-200 px-2 py-1">{p.children}</td>
+  ),
+};
 
 export function TaskDetail() {
   const {
@@ -34,10 +124,13 @@ export function TaskDetail() {
   const [name, setName] = useState(task?.name ?? "");
   const [details, setDetails] = useState(task?.details ?? "");
   const [project, setProject] = useState(task?.project ?? "");
+  const [editingDetails, setEditingDetails] = useState(false);
+  const detailsRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     setConfirmDelete(false);
     setCopied(false);
+    setEditingDetails(false);
     if (task) {
       setName(task.name);
       setDetails(task.details);
@@ -45,6 +138,15 @@ export function TaskDetail() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTaskId]);
+
+  useEffect(() => {
+    if (editingDetails && detailsRef.current) {
+      const ta = detailsRef.current;
+      ta.focus();
+      const end = ta.value.length;
+      ta.setSelectionRange(end, end);
+    }
+  }, [editingDetails]);
 
   async function copyLink() {
     if (!task) return;
@@ -82,7 +184,7 @@ export function TaskDetail() {
       />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 z-50 h-screen w-full sm:max-w-lg overflow-y-auto border-l border-gray-200 bg-white shadow-xl animate-in slide-in-from-right">
+      <div className="fixed right-0 top-0 z-50 h-screen w-full sm:max-w-lg lg:max-w-none lg:w-1/2 overflow-y-auto border-l border-gray-200 bg-white shadow-xl animate-in slide-in-from-right">
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
           <h2 className="text-lg font-semibold text-gray-900">Task details</h2>
@@ -126,16 +228,49 @@ export function TaskDetail() {
           />
 
           {/* Details */}
-          <Textarea
-            label="Details"
-            value={details}
-            placeholder="Add a description..."
-            rows={4}
-            onChange={(e) => setDetails(e.target.value)}
-            onBlur={() => {
-              if (details !== task.details) updateTask(task.id, { details });
-            }}
-          />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-gray-700">Details</label>
+            {editingDetails ? (
+              <Textarea
+                ref={detailsRef}
+                value={details}
+                placeholder="Add a description... (markdown supported)"
+                rows={10}
+                onChange={(e) => setDetails(e.target.value)}
+                onBlur={() => {
+                  if (details !== task.details)
+                    updateTask(task.id, { details });
+                  setEditingDetails(false);
+                }}
+              />
+            ) : (
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => setEditingDetails(true)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setEditingDetails(true);
+                  }
+                }}
+                className="min-h-[10rem] cursor-text rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 hover:border-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              >
+                {details ? (
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={MARKDOWN_COMPONENTS}
+                  >
+                    {details}
+                  </ReactMarkdown>
+                ) : (
+                  <span className="text-gray-400">
+                    Add a description... (markdown supported)
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Status & Priority row */}
           <div className="grid grid-cols-2 gap-4">
