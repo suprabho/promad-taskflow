@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -47,15 +47,25 @@ function projectColor(project: string) {
 
 export function TaskBoard() {
   const { tasks, updateTask, groupBy, setGroupBy } = useTaskStore();
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [isMobile, setIsMobile] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
+  useEffect(() => {
+    const update = () =>
+      setIsMobile(window.matchMedia("(max-width: 767px)").matches);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
   const columns = useMemo(() => {
     if (groupBy === "status") {
       return STATUS_ORDER.map((status) => ({
-        id: status,
+        id: status as string,
         label: STATUS_LABELS[status],
         dotColor: statusColors[status],
         tasks: tasks.filter((t) => t.status === status),
@@ -91,6 +101,42 @@ export function TaskBoard() {
 
     return cols;
   }, [tasks, groupBy]);
+
+  const columnsKey = useMemo(
+    () => columns.map((c) => c.id).join("|"),
+    [columns]
+  );
+
+  // Mobile accordion invariant: at most one column expanded at a time.
+  useEffect(() => {
+    if (!isMobile || columns.length === 0) return;
+    setCollapsed((prev) => {
+      const expanded = columns.filter((c) => !prev.has(c.id));
+      if (expanded.length <= 1) return prev;
+      const keep = expanded[0].id;
+      return new Set(columns.filter((c) => c.id !== keep).map((c) => c.id));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMobile, columnsKey]);
+
+  function toggleCollapse(id: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (isMobile) {
+        if (next.has(id)) {
+          // Expanding this column: collapse every other.
+          for (const c of columns) next.add(c.id);
+          next.delete(id);
+        } else {
+          next.add(id);
+        }
+      } else {
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+      }
+      return next;
+    });
+  }
 
   function applyDrop(taskId: string, targetColumnId: string) {
     if (groupBy === "status") {
@@ -172,7 +218,7 @@ export function TaskBoard() {
         onDragEnd={handleDragEnd}
         onDragOver={handleDragOver}
       >
-        <div className="flex flex-col gap-4 pb-4 px-1 md:flex-row md:overflow-x-auto md:pb-3">
+        <div className="flex flex-col gap-3 px-1 pb-4 md:h-[calc(100vh-200px)] md:flex-row md:overflow-x-auto md:pb-3">
           {columns.map((col) => (
             <BoardColumn
               key={col.id}
@@ -180,6 +226,8 @@ export function TaskBoard() {
               label={col.label}
               dotColor={col.dotColor}
               tasks={col.tasks}
+              isCollapsed={collapsed.has(col.id)}
+              onToggleCollapse={() => toggleCollapse(col.id)}
             />
           ))}
         </div>
