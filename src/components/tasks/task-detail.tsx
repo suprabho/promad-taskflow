@@ -184,9 +184,9 @@ export function TaskDetail() {
       />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 z-50 h-screen w-full sm:max-w-lg lg:max-w-none lg:w-1/2 overflow-y-auto border-l border-gray-200 bg-white shadow-xl animate-in slide-in-from-right">
+      <div className="fixed right-0 top-0 z-50 flex h-screen w-full flex-col border-l border-gray-200 bg-white shadow-xl animate-in slide-in-from-right sm:max-w-lg lg:max-w-none lg:w-1/2">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
+        <div className="z-10 flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
           <h2 className="text-lg font-semibold text-gray-900">Task details</h2>
           <div className="flex items-center gap-1">
             <button
@@ -215,65 +215,72 @@ export function TaskDetail() {
           </div>
         </div>
 
-        <div className="space-y-5 px-6 py-5">
-          {/* Name */}
-          <Input
-            label="Task name"
-            value={name}
-            placeholder="Enter task name..."
-            onChange={(e) => setName(e.target.value)}
-            onBlur={() => {
-              if (name !== task.name) updateTask(task.id, { name });
-            }}
-          />
+        {/* Body — single scroll on small screens, two columns on lg+ */}
+        <div className="flex-1 overflow-y-auto lg:flex lg:overflow-hidden">
+          {/* Main column: Name + Details */}
+          <div className="space-y-5 px-6 py-5 lg:flex-1 lg:min-w-0 lg:overflow-y-auto">
+            {/* Name */}
+            <Input
+              label="Task name"
+              value={name}
+              placeholder="Enter task name..."
+              onChange={(e) => setName(e.target.value)}
+              onBlur={() => {
+                if (name !== task.name) updateTask(task.id, { name });
+              }}
+            />
 
-          {/* Details */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700">Details</label>
-            {editingDetails ? (
-              <Textarea
-                ref={detailsRef}
-                value={details}
-                placeholder="Add a description... (markdown supported)"
-                rows={10}
-                onChange={(e) => setDetails(e.target.value)}
-                onBlur={() => {
-                  if (details !== task.details)
-                    updateTask(task.id, { details });
-                  setEditingDetails(false);
-                }}
-              />
-            ) : (
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => setEditingDetails(true)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setEditingDetails(true);
-                  }
-                }}
-                className="min-h-[10rem] cursor-text rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 hover:border-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              >
-                {details ? (
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={MARKDOWN_COMPONENTS}
-                  >
-                    {details}
-                  </ReactMarkdown>
-                ) : (
-                  <span className="text-gray-400">
-                    Add a description... (markdown supported)
-                  </span>
-                )}
-              </div>
-            )}
+            {/* Details */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700">
+                Details
+              </label>
+              {editingDetails ? (
+                <Textarea
+                  ref={detailsRef}
+                  value={details}
+                  placeholder="Add a description... (markdown supported)"
+                  rows={10}
+                  onChange={(e) => setDetails(e.target.value)}
+                  onBlur={() => {
+                    if (details !== task.details)
+                      updateTask(task.id, { details });
+                    setEditingDetails(false);
+                  }}
+                />
+              ) : (
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setEditingDetails(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setEditingDetails(true);
+                    }
+                  }}
+                  className="min-h-[10rem] cursor-text rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 hover:border-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                >
+                  {details ? (
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={MARKDOWN_COMPONENTS}
+                    >
+                      {details}
+                    </ReactMarkdown>
+                  ) : (
+                    <span className="text-gray-400">
+                      Add a description... (markdown supported)
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Status & Priority row */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Sidebar: properties + comments + activity + metadata + delete */}
+          <div className="space-y-5 px-6 pb-5 border-gray-200 lg:w-72 lg:shrink-0 lg:border-l lg:overflow-y-auto lg:pt-5">
+            {/* Status */}
             <Select
               label="Status"
               options={statusOptions}
@@ -284,6 +291,8 @@ export function TaskDetail() {
                 })
               }
             />
+
+            {/* Priority */}
             <Select
               label="Priority"
               options={priorityOptions}
@@ -294,10 +303,8 @@ export function TaskDetail() {
                 })
               }
             />
-          </div>
 
-          {/* Type & Due date row */}
-          <div className="grid grid-cols-2 gap-4">
+            {/* Type */}
             <Select
               label="Type"
               options={typeOptions}
@@ -308,6 +315,8 @@ export function TaskDetail() {
                 })
               }
             />
+
+            {/* Due date */}
             <Input
               label="Due date"
               type="date"
@@ -318,87 +327,88 @@ export function TaskDetail() {
                 })
               }
             />
-          </div>
 
-          {/* Project */}
-          <Input
-            label="Project"
-            value={project}
-            placeholder="e.g. Merkle Science, Kidzovo, Begin..."
-            onChange={(e) => setProject(e.target.value)}
-            onBlur={() => {
-              const next = project.trim() ? project : null;
-              if (next !== task.project) updateTask(task.id, { project: next });
-            }}
-          />
+            {/* Project */}
+            <Input
+              label="Project"
+              value={project}
+              placeholder="e.g. Merkle Science, Kidzovo, Begin..."
+              onChange={(e) => setProject(e.target.value)}
+              onBlur={() => {
+                const next = project.trim() ? project : null;
+                if (next !== task.project)
+                  updateTask(task.id, { project: next });
+              }}
+            />
 
-          {/* Assignees */}
-          <AssigneePicker
-            assignees={task.assignees}
-            onChange={(assignees) => updateTask(task.id, { assignees })}
-          />
+            {/* Assignees */}
+            <AssigneePicker
+              assignees={task.assignees}
+              onChange={(assignees) => updateTask(task.id, { assignees })}
+            />
 
-          {/* Comments */}
-          <div className="border-t border-gray-200 pt-4">
-            <CommentThread taskId={task.id} />
-          </div>
+            {/* Comments */}
+            <div className="border-t border-gray-200 pt-4">
+              <CommentThread taskId={task.id} />
+            </div>
 
-          {/* Activity */}
-          <div className="border-t border-gray-200 pt-4">
-            <ActivityFeed taskId={task.id} />
-          </div>
+            {/* Activity */}
+            <div className="border-t border-gray-200 pt-4">
+              <ActivityFeed taskId={task.id} />
+            </div>
 
-          {/* Metadata */}
-          <div className="border-t border-gray-200 pt-4 space-y-1">
-            <p className="text-xs text-gray-400">
-              Created{" "}
-              {new Date(task.created_at).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </p>
-            <p className="text-xs text-gray-400">
-              Updated{" "}
-              {new Date(task.updated_at).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </p>
-          </div>
+            {/* Metadata */}
+            <div className="border-t border-gray-200 pt-4 space-y-1">
+              <p className="text-xs text-gray-400">
+                Created{" "}
+                {new Date(task.created_at).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </p>
+              <p className="text-xs text-gray-400">
+                Updated{" "}
+                {new Date(task.updated_at).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </p>
+            </div>
 
-          {/* Delete */}
-          <div className="border-t border-gray-200 pt-4">
-            {confirmDelete ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-red-600">Are you sure?</span>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => deleteTask(task.id)}
-                >
-                  Yes, delete
-                </Button>
+            {/* Delete */}
+            <div className="border-t border-gray-200 pt-4">
+              {confirmDelete ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-red-600">Are you sure?</span>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => deleteTask(task.id)}
+                  >
+                    Yes, delete
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setConfirmDelete(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setConfirmDelete(false)}
+                  className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                  onClick={() => setConfirmDelete(true)}
                 >
-                  Cancel
+                  <Trash className="h-4 w-4" />
+                  Delete task
                 </Button>
-              </div>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                onClick={() => setConfirmDelete(true)}
-              >
-                <Trash className="h-4 w-4" />
-                Delete task
-              </Button>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
