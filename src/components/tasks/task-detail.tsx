@@ -110,7 +110,7 @@ const MARKDOWN_COMPONENTS = {
 
 export function TaskDetail() {
   const {
-    tasks,
+    allTasks,
     selectedTaskId,
     detailOpen,
     closeDetail,
@@ -118,7 +118,7 @@ export function TaskDetail() {
     deleteTask,
   } = useTaskStore();
 
-  const task = tasks.find((t) => t.id === selectedTaskId);
+  const task = allTasks.find((t) => t.id === selectedTaskId);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [copied, setCopied] = useState(false);
   const [name, setName] = useState(task?.name ?? "");
