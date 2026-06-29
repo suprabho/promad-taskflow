@@ -22,15 +22,37 @@ struct TaskItem: Identifiable, Codable, Hashable {
         return TaskflowDate.parseISODate(dueDate)
     }
 
-    /// Overdue = has a due date strictly before today and not done.
-    func isOverdue(now: Date = Date()) -> Bool {
-        guard let due, !isDone else { return false }
-        return Calendar.current.startOfDay(for: due) < Calendar.current.startOfDay(for: now)
+    /// Statuses that belong in the day view.
+    var isActionable: Bool { status == "todo" || status == "in_progress" }
+
+    /// Eligible for the "Today & Upcoming" view: actionable, has a due date,
+    /// and that date is today or later (overdue tasks are intentionally hidden).
+    func isUpcoming(now: Date = Date()) -> Bool {
+        guard isActionable, let due else { return false }
+        let cal = Calendar.current
+        return cal.startOfDay(for: due) >= cal.startOfDay(for: now)
     }
 
     func isDueToday(now: Date = Date()) -> Bool {
         guard let due else { return false }
         return Calendar.current.isDate(due, inSameDayAs: now)
+    }
+
+    func isDueTomorrow(now: Date = Date()) -> Bool {
+        guard let due, let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: now) else { return false }
+        return Calendar.current.isDate(due, inSameDayAs: tomorrow)
+    }
+
+    /// Short human label for the due date: "Today" / "Tomorrow" / "Jul 3".
+    var dueLabel: String {
+        guard let due else { return "" }
+        if isDueToday() { return "Today" }
+        if isDueTomorrow() { return "Tomorrow" }
+        let f = DateFormatter()
+        f.calendar = Calendar(identifier: .gregorian)
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "MMM d"
+        return f.string(from: due)
     }
 }
 
@@ -42,15 +64,17 @@ struct ProjectGroup: Identifiable, Hashable {
 }
 
 enum TaskflowDate {
-    /// Postgres `date` columns arrive as "yyyy-MM-dd". Parse at noon UTC to
-    /// dodge timezone day-rollover surprises, then compare by calendar day.
+    /// Postgres `date` columns arrive as "yyyy-MM-dd". These are calendar dates
+    /// with no timezone, so parse them in the user's *local* calendar at noon —
+    /// local so "today/tomorrow" comparisons are right everywhere, noon to dodge
+    /// DST midnight gaps.
     static func parseISODate(_ s: String) -> Date? {
         let f = DateFormatter()
         f.calendar = Calendar(identifier: .gregorian)
         f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone(identifier: "UTC")
-        f.dateFormat = "yyyy-MM-dd"
-        return f.date(from: String(s.prefix(10)))
+        f.timeZone = .current
+        f.dateFormat = "yyyy-MM-dd'T'HH:mm"
+        return f.date(from: String(s.prefix(10)) + "T12:00")
     }
 
     static func todayISO(now: Date = Date()) -> String {
@@ -63,14 +87,14 @@ enum TaskflowDate {
 }
 
 /// Pure grouping/sorting used by both the menu bar popover and the widget,
-/// so they always agree on what "today & overdue" means.
+/// so they always agree on what "Today & Upcoming" means.
 enum DayPlanner {
-    /// Keep only open (not done) tasks due today or earlier, grouped by
-    /// project, overdue first, then by due date and priority.
-    static func plan(_ tasks: [TaskItem], now: Date = Date()) -> [ProjectGroup] {
+    /// Keep actionable (todo / in progress) tasks due today or later, excluding
+    /// any the user has snoozed for the day. Grouped by project, soonest-due
+    /// project first, then by due date and priority within each group.
+    static func plan(_ tasks: [TaskItem], now: Date = Date(), snoozed: Set<String> = []) -> [ProjectGroup] {
         let relevant = tasks.filter { t in
-            guard !t.isDone else { return false }
-            return t.isOverdue(now: now) || t.isDueToday(now: now)
+            t.isUpcoming(now: now) && !snoozed.contains(t.id)
         }
 
         let priorityRank = ["urgent": 0, "high": 1, "medium": 2, "low": 3]
@@ -87,11 +111,11 @@ enum DayPlanner {
                 }
                 return ProjectGroup(name: name, tasks: sorted)
             }
-            // Projects with overdue work float to the top, then alphabetical.
+            // Soonest-due project first; ties broken alphabetically.
             .sorted { lhs, rhs in
-                let lo = lhs.tasks.contains { $0.isOverdue(now: now) }
-                let ro = rhs.tasks.contains { $0.isOverdue(now: now) }
-                if lo != ro { return lo && !ro }
+                let le = lhs.tasks.first?.due ?? .distantFuture
+                let re = rhs.tasks.first?.due ?? .distantFuture
+                if le != re { return le < re }
                 return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
             }
     }

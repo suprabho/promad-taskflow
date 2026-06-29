@@ -20,7 +20,12 @@ final class DayStore: ObservableObject {
     init() {
         // Show the cached snapshot immediately, then refresh.
         allTasks = AppGroupStore.loadSnapshot()
-        groups = DayPlanner.plan(allTasks)
+        replan()
+    }
+
+    /// Re-group from the current tasks, applying the active snoozes.
+    private func replan() {
+        groups = DayPlanner.plan(allTasks, snoozed: AppGroupStore.activeSnoozedIDs())
     }
 
     func refresh() async {
@@ -34,7 +39,7 @@ final class DayStore: ObservableObject {
         do {
             let tasks = try await service.fetchDayTasks()
             allTasks = tasks
-            groups = DayPlanner.plan(tasks)
+            replan()
             lastUpdated = Date()
             AppGroupStore.saveSnapshot(tasks)
             WidgetCenter.shared.reloadAllTimelines()
@@ -42,6 +47,13 @@ final class DayStore: ObservableObject {
             errorMessage = error.localizedDescription
         }
         isLoading = false
+    }
+
+    /// Snooze a task for the rest of the day (local only).
+    func snooze(_ task: TaskItem) {
+        AppGroupStore.snooze(taskID: task.id)
+        replan()
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     /// Check a task off (or back on) with an optimistic local update.
@@ -55,7 +67,7 @@ final class DayStore: ObservableObject {
         } else if let i = allTasks.firstIndex(where: { $0.id == task.id }) {
             allTasks[i].status = "todo"
         }
-        groups = DayPlanner.plan(allTasks)
+        replan()
 
         do {
             try await service.setDone(taskID: task.id, done: markDone)

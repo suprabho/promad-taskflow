@@ -5,9 +5,10 @@ A native macOS app for Taskflow with three surfaces:
 1. **Main window** — your existing Taskflow web UI in a `WKWebView` (dock icon,
    native window/toolbar, persistent login).
 2. **Menu-bar popover** — click the status-bar checklist icon for a
-   **Today & Overdue** list grouped by Client/Project, with tap-to-check.
+   **Today & Upcoming** list grouped by Client/Project, with tap-to-check and
+   per-task snooze.
 3. **Widget** — a Notification-Center / desktop widget showing the same
-   Today & Overdue checklist, with interactive checkboxes.
+   Today & Upcoming checklist, with interactive check-off and snooze.
 
 The window reuses your web front-end. The menu bar and widget read your task
 data **directly from Supabase** (your RLS allows anon read + update), so they
@@ -63,9 +64,15 @@ Find your Team ID in Xcode → Settings → Accounts (10-char ID in parentheses)
 | Menu-bar popover | Supabase REST (`fetchDayTasks`) | check off → `PATCH status=done` |
 | Widget | Supabase REST + a cached snapshot in the App Group | check off → `ToggleTaskIntent` |
 
-- **Today & Overdue** = tasks that aren't `done` with a `due_date` of today or
-  earlier, in the configured workspace. Grouping/sorting lives in
-  `Shared/TaskModels.swift` (`DayPlanner`) so the popover and widget always agree.
+- **Today & Upcoming** = tasks with status `todo` or `in_progress` whose
+  `due_date` is **today or later** (overdue and undated tasks are not shown), in
+  the configured workspace. Grouping/sorting lives in `Shared/TaskModels.swift`
+  (`DayPlanner`) so the popover and widget always agree.
+- **Snooze** hides a task for the rest of the day. It's stored locally in the
+  App Group (`activeSnoozedIDs`), **not** in Supabase — it's a personal "not
+  today" toggle, so it never touches your shared data. Snoozes auto-clear at
+  local midnight. In the popover, hover a row and click the moon button; in the
+  widget, tap the moon (powered by `SnoozeTaskIntent`).
 - Credentials + a task snapshot are stored in the **App Group**
   (`group.design.promad.taskflow`), shared between the app and the widget.
 - Checking a task off does an optimistic UI update, then a Supabase `PATCH`, and

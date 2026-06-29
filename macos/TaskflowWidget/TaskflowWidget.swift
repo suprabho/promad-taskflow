@@ -15,8 +15,9 @@ struct DayProvider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (DayEntry) -> Void) {
-        // Render instantly from the shared snapshot.
-        let groups = DayPlanner.plan(AppGroupStore.loadSnapshot())
+        // Render instantly from the shared snapshot, honoring snoozes.
+        let groups = DayPlanner.plan(AppGroupStore.loadSnapshot(),
+                                     snoozed: AppGroupStore.activeSnoozedIDs())
         completion(DayEntry(date: Date(),
                             groups: context.isPreview ? DayProvider.sample : groups,
                             configured: AppGroupStore.isConfigured))
@@ -32,9 +33,9 @@ struct DayProvider: TimelineProvider {
                 }
             }
             let entry = DayEntry(date: Date(),
-                                 groups: DayPlanner.plan(tasks),
+                                 groups: DayPlanner.plan(tasks, snoozed: AppGroupStore.activeSnoozedIDs()),
                                  configured: AppGroupStore.isConfigured)
-            // Refresh roughly every 15 minutes; toggles reload immediately.
+            // Refresh roughly every 15 minutes; toggles/snoozes reload immediately.
             let next = Calendar.current.date(byAdding: .minute, value: 15, to: Date()) ?? Date().addingTimeInterval(900)
             completion(Timeline(entries: [entry], policy: .after(next)))
         }
@@ -43,10 +44,10 @@ struct DayProvider: TimelineProvider {
     static let sample: [ProjectGroup] = [
         ProjectGroup(name: "Merkle Science Product", tasks: [
             TaskItem(id: "1", name: "KYBB watchlist demo", status: "todo", dueDate: "2026-06-29", priority: "high", project: "Merkle Science Product"),
-            TaskItem(id: "2", name: "Compass rule engine toggle", status: "todo", dueDate: "2026-06-28", priority: "urgent", project: "Merkle Science Product"),
+            TaskItem(id: "2", name: "Compass rule engine toggle", status: "in_progress", dueDate: "2026-06-30", priority: "urgent", project: "Merkle Science Product"),
         ]),
         ProjectGroup(name: "Proffy", tasks: [
-            TaskItem(id: "3", name: "Footer for Proffy", status: "todo", dueDate: "2026-06-29", priority: "medium", project: "Proffy"),
+            TaskItem(id: "3", name: "Footer for Proffy", status: "todo", dueDate: "2026-07-02", priority: "medium", project: "Proffy"),
         ]),
     ]
 }
@@ -59,8 +60,8 @@ struct TaskflowWidget: Widget {
             TaskflowWidgetView(entry: entry)
                 .containerBackground(.background, for: .widget)
         }
-        .configurationDisplayName("Today & Overdue")
-        .description("Your open tasks due today or earlier, grouped by project.")
+        .configurationDisplayName("Today & Upcoming")
+        .description("Your todo / in-progress tasks due today or later, grouped by project.")
         .supportedFamilies([.systemMedium, .systemLarge, .systemExtraLarge])
     }
 }
@@ -92,7 +93,7 @@ struct TaskflowWidgetView: View {
     private var list: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Today & Overdue").font(.headline)
+                Text("Today & Upcoming").font(.headline)
                 Spacer()
                 Text("\(DayPlanner.openCount(entry.groups))")
                     .font(.subheadline).fontWeight(.semibold)
@@ -161,13 +162,13 @@ struct TaskflowWidgetView: View {
             Image(systemName: "checkmark.circle.fill")
                 .font(.largeTitle).foregroundStyle(.green)
             Text("All clear").font(.headline)
-            Text("Nothing due today.").font(.caption).foregroundStyle(.secondary)
+            Text("Nothing due today or later.").font(.caption).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
-/// Interactive row — the checkbox is a Button driving ToggleTaskIntent.
+/// Interactive row — checkbox marks done, the moon button snoozes for today.
 struct WidgetTaskRow: View {
     let task: TaskItem
 
@@ -185,11 +186,16 @@ struct WidgetTaskRow: View {
 
             Spacer(minLength: 4)
 
-            if task.isOverdue() {
-                Circle().fill(.red).frame(width: 6, height: 6)
-            } else if task.isDueToday() {
-                Circle().fill(.orange).frame(width: 6, height: 6)
+            Text(task.dueLabel)
+                .font(.caption2)
+                .foregroundStyle(task.isDueToday() ? Color.orange : Color.secondary)
+
+            Button(intent: SnoozeTaskIntent(taskID: task.id)) {
+                Image(systemName: "moon.zzz.fill")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
             }
+            .buttonStyle(.plain)
         }
     }
 }

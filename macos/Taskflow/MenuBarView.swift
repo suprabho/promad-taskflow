@@ -33,8 +33,8 @@ struct MenuBarView: View {
     private var header: some View {
         HStack(spacing: 8) {
             VStack(alignment: .leading, spacing: 1) {
-                Text("Today & Overdue").font(.headline)
-                Text(store.openCount == 0 ? "All clear" : "\(store.openCount) open")
+                Text("Today & Upcoming").font(.headline)
+                Text(store.openCount == 0 ? "Nothing scheduled" : "\(store.openCount) upcoming")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
@@ -63,9 +63,11 @@ struct MenuBarView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     ForEach(store.groups) { group in
-                        ProjectSection(group: group) { task in
-                            Task { await store.toggle(task) }
-                        }
+                        ProjectSection(
+                            group: group,
+                            onToggle: { task in Task { await store.toggle(task) } },
+                            onSnooze: { task in store.snooze(task) }
+                        )
                     }
                 }
                 .padding(14)
@@ -77,8 +79,8 @@ struct MenuBarView: View {
         VStack(spacing: 8) {
             Image(systemName: "checkmark.circle")
                 .font(.system(size: 30)).foregroundStyle(.green)
-            Text("Nothing due today").font(.callout).fontWeight(.medium)
-            Text("You’re all caught up.").font(.caption).foregroundStyle(.secondary)
+            Text("Nothing coming up").font(.callout).fontWeight(.medium)
+            Text("No tasks due today or later.").font(.caption).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 36)
     }
@@ -131,6 +133,7 @@ struct MenuBarView: View {
 private struct ProjectSection: View {
     let group: ProjectGroup
     let onToggle: (TaskItem) -> Void
+    let onSnooze: (TaskItem) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -138,16 +141,20 @@ private struct ProjectSection: View {
                 .font(.subheadline).fontWeight(.semibold)
                 .foregroundStyle(.secondary)
             ForEach(group.tasks) { task in
-                TaskRow(task: task) { onToggle(task) }
+                TaskRow(task: task,
+                        onToggle: { onToggle(task) },
+                        onSnooze: { onSnooze(task) })
             }
         }
     }
 }
 
-/// A single task: checkbox + name + an overdue/today hint.
+/// A single task: checkbox + name + due hint + a snooze button (on hover).
 private struct TaskRow: View {
     let task: TaskItem
     let onToggle: () -> Void
+    let onSnooze: () -> Void
+    @State private var hovering = false
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -166,19 +173,28 @@ private struct TaskRow: View {
 
             Spacer(minLength: 4)
 
-            if task.isOverdue() {
-                Text("Overdue")
-                    .font(.caption2).fontWeight(.medium)
-                    .foregroundStyle(.red)
-                    .padding(.horizontal, 6).padding(.vertical, 2)
-                    .background(Color.red.opacity(0.12), in: Capsule())
-            } else if task.isDueToday() {
-                Text("Today")
-                    .font(.caption2).fontWeight(.medium)
-                    .foregroundStyle(.orange)
-                    .padding(.horizontal, 6).padding(.vertical, 2)
-                    .background(Color.orange.opacity(0.12), in: Capsule())
+            dueBadge
+
+            // Snooze: reveal on hover to keep the row clean.
+            Button(action: onSnooze) {
+                Image(systemName: "moon.zzz.fill")
+                    .foregroundStyle(.secondary)
             }
+            .buttonStyle(.borderless)
+            .help("Snooze until tomorrow")
+            .opacity(hovering ? 1 : 0)
         }
+        .contentShape(Rectangle())
+        .onHover { hovering = $0 }
+    }
+
+    @ViewBuilder
+    private var dueBadge: some View {
+        let color: Color = task.isDueToday() ? .orange : (task.isDueTomorrow() ? .blue : .secondary)
+        Text(task.dueLabel)
+            .font(.caption2).fontWeight(.medium)
+            .foregroundStyle(color)
+            .padding(.horizontal, 6).padding(.vertical, 2)
+            .background(color.opacity(0.12), in: Capsule())
     }
 }

@@ -43,17 +43,18 @@ struct SupabaseService {
         return req
     }
 
-    /// Fetch open tasks due today or earlier for the configured workspace.
-    /// Filtering happens server-side; `DayPlanner` does the grouping.
+    /// Fetch actionable (todo / in progress) tasks due today or later for the
+    /// configured workspace. Filtering happens server-side; `DayPlanner` groups
+    /// and applies the local snooze.
     func fetchDayTasks() async throws -> [TaskItem] {
         let today = TaskflowDate.todayISO()
-        // status != done, due_date <= today (PostgREST drops nulls for lte),
-        // limited to the workspace, newest-relevant first.
+        // status in (todo, in_progress), due_date >= today (PostgREST drops
+        // nulls for gte), limited to the workspace, soonest-due first.
         let query = [
             "select=id,name,status,due_date,priority,project,workspace_id",
             "workspace_id=eq.\(workspaceID)",
-            "status=neq.done",
-            "due_date=lte.\(today)",
+            "status=in.(todo,in_progress)",
+            "due_date=gte.\(today)",
             "order=due_date.asc",
             "limit=500",
         ].joined(separator: "&")

@@ -40,3 +40,23 @@ struct ToggleTaskIntent: AppIntent {
         return .result()
     }
 }
+
+/// Snoozes a task for the rest of the day (hidden from the menu bar + widget
+/// until local midnight). Stored locally in the App Group, not in Supabase.
+@available(macOS 14.0, *)
+struct SnoozeTaskIntent: AppIntent {
+    static var title: LocalizedStringResource = "Snooze Task for Today"
+    static var description = IntentDescription("Hide a Taskflow task until tomorrow.")
+
+    @Parameter(title: "Task ID")
+    var taskID: String
+
+    init() {}
+    init(taskID: String) { self.taskID = taskID }
+
+    func perform() async throws -> some IntentResult {
+        AppGroupStore.snooze(taskID: taskID)
+        WidgetCenter.shared.reloadAllTimelines()
+        return .result()
+    }
+}
