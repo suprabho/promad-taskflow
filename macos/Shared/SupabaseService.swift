@@ -35,7 +35,7 @@ struct SupabaseService {
 
     private func request(path: String, query: String) -> URLRequest {
         var comps = URLComponents(string: "\(baseURL)/rest/v1/\(path)")!
-        comps.percentEncodedQuery = query
+        if !query.isEmpty { comps.percentEncodedQuery = query }
         var req = URLRequest(url: comps.url!)
         req.setValue(anonKey, forHTTPHeaderField: "apikey")
         req.setValue("Bearer \(anonKey)", forHTTPHeaderField: "Authorization")
@@ -69,6 +69,59 @@ struct SupabaseService {
         } catch {
             throw ServiceError.decoding(error.localizedDescription)
         }
+    }
+
+    /// Workspace members, for the assignee picker.
+    func fetchUsers() async throws -> [TaskUser] {
+        var req = request(path: "users", query: "select=id,name&order=name.asc")
+        req.httpMethod = "GET"
+        let (data, response) = try await URLSession.shared.data(for: req)
+        try Self.check(response, data)
+        return (try? JSONDecoder().decode([TaskUser].self, from: data)) ?? []
+    }
+
+    /// Distinct project names in the workspace, for the project suggestions.
+    func fetchProjects() async throws -> [String] {
+        let query = [
+            "select=project",
+            "workspace_id=eq.\(workspaceID)",
+            "project=not.is.null",
+            "limit=2000",
+        ].joined(separator: "&")
+        var req = request(path: "tasks", query: query)
+        req.httpMethod = "GET"
+        let (data, response) = try await URLSession.shared.data(for: req)
+        try Self.check(response, data)
+        struct Row: Decodable { let project: String? }
+        let rows = (try? JSONDecoder().decode([Row].self, from: data)) ?? []
+        let names = Set(rows.compactMap { $0.project }.filter { !$0.isEmpty })
+        return names.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    }
+
+    /// Insert a new task. Nil/empty optional fields fall back to DB defaults.
+    func createTask(name: String,
+                    status: String,
+                    priority: String,
+                    project: String?,
+                    dueDate: String?,
+                    assignees: [String]) async throws {
+        var body: [String: Any] = [
+            "name": name,
+            "status": status,
+            "priority": priority,
+            "assignees": assignees,
+            "workspace_id": workspaceID,
+        ]
+        if let project, !project.isEmpty { body["project"] = project }
+        if let dueDate, !dueDate.isEmpty { body["due_date"] = dueDate }
+
+        var req = request(path: "tasks", query: "")
+        req.httpMethod = "POST"
+        req.setValue("return=minimal", forHTTPHeaderField: "Prefer")
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: req)
+        try Self.check(response, data)
     }
 
     /// Flip a task to done (or back to todo). Returns the new status.

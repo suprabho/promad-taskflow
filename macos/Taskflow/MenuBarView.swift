@@ -7,6 +7,7 @@ struct MenuBarView: View {
     @StateObject private var store = DayStore()
     @Environment(\.openWindow) private var openWindow
     @State private var showConnect = false
+    @State private var showAdd = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -15,6 +16,8 @@ struct MenuBarView: View {
                     onDone: { showConnect = false; Task { await store.refresh() } },
                     onCancel: store.isConfigured ? { showConnect = false } : nil
                 )
+            } else if showAdd {
+                AddTaskForm(store: store, onClose: { showAdd = false })
             } else {
                 header
                 Divider()
@@ -38,6 +41,15 @@ struct MenuBarView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
+            Button {
+                Task { await store.loadFormData() }
+                showAdd = true
+            } label: {
+                Image(systemName: "plus")
+            }
+            .buttonStyle(.borderless)
+            .help("Add task")
+
             if store.isLoading {
                 ProgressView().controlSize(.small)
             } else {
@@ -196,5 +208,143 @@ private struct TaskRow: View {
             .foregroundStyle(color)
             .padding(.horizontal, 6).padding(.vertical, 2)
             .background(color.opacity(0.12), in: Capsule())
+    }
+}
+
+/// Inline form to create a new task in Supabase.
+private struct AddTaskForm: View {
+    @ObservedObject var store: DayStore
+    var onClose: () -> Void
+
+    @State private var name = ""
+    @State private var status = "todo"
+    @State private var priority = "medium"
+    @State private var project = ""
+    @State private var includeDueDate = true
+    @State private var dueDate = Date()
+    @State private var assignees: Set<String> = []
+    @State private var submitting = false
+    @State private var error: String?
+
+    private var canSave: Bool {
+        !name.trimmingCharacters(in: .whitespaces).isEmpty && !submitting
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text("New Task").font(.headline)
+                Spacer()
+                Button(action: onClose) { Image(systemName: "xmark") }
+                    .buttonStyle(.borderless)
+            }
+            .padding(.horizontal, 14).padding(.vertical, 10)
+            Divider()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    field("Name") {
+                        TextField("Task name", text: $name).textFieldStyle(.roundedBorder)
+                    }
+                    HStack(alignment: .top, spacing: 10) {
+                        field("Status") {
+                            Picker("", selection: $status) {
+                                ForEach(TaskOptions.statuses, id: \.value) { Text($0.label).tag($0.value) }
+                            }.labelsHidden()
+                        }
+                        field("Priority") {
+                            Picker("", selection: $priority) {
+                                ForEach(TaskOptions.priorities, id: \.value) { Text($0.label).tag($0.value) }
+                            }.labelsHidden()
+                        }
+                    }
+                    field("Project") {
+                        HStack(spacing: 6) {
+                            TextField("Project name", text: $project).textFieldStyle(.roundedBorder)
+                            if !store.projects.isEmpty {
+                                Menu {
+                                    ForEach(store.projects, id: \.self) { p in
+                                        Button(p) { project = p }
+                                    }
+                                } label: { Image(systemName: "chevron.down") }
+                                    .menuStyle(.borderlessButton).frame(width: 22)
+                            }
+                        }
+                    }
+                    field("Due date") {
+                        HStack(spacing: 8) {
+                            Toggle("", isOn: $includeDueDate).labelsHidden().toggleStyle(.switch)
+                            if includeDueDate {
+                                DatePicker("", selection: $dueDate, displayedComponents: .date).labelsHidden()
+                            } else {
+                                Text("No due date").font(.callout).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                        }
+                    }
+                    field("Assignees") {
+                        Menu {
+                            ForEach(store.users) { u in
+                                if assignees.contains(u.id) {
+                                    Button { assignees.remove(u.id) } label: { Label(u.name, systemImage: "checkmark") }
+                                } else {
+                                    Button(u.name) { assignees.insert(u.id) }
+                                }
+                            }
+                        } label: {
+                            Text(assigneeLabel).lineLimit(1)
+                        }
+                        .menuStyle(.borderlessButton)
+                    }
+
+                    if let error {
+                        Text(error).font(.caption).foregroundStyle(.red)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding(14)
+            }
+
+            Divider()
+            HStack {
+                Button("Cancel", action: onClose).keyboardShortcut(.cancelAction)
+                Spacer()
+                Button(submitting ? "Adding…" : "Add Task") { submit() }
+                    .keyboardShortcut(.defaultAction)
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!canSave)
+            }
+            .padding(.horizontal, 14).padding(.vertical, 10)
+        }
+        .task { await store.loadFormData() }
+    }
+
+    private var assigneeLabel: String {
+        if assignees.isEmpty { return "Unassigned" }
+        return store.users.filter { assignees.contains($0.id) }.map(\.name).joined(separator: ", ")
+    }
+
+    @ViewBuilder
+    private func field<Content: View>(_ label: String, @ViewBuilder _ content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(label).font(.caption).foregroundStyle(.secondary)
+            content()
+        }
+    }
+
+    private func submit() {
+        error = nil
+        submitting = true
+        let due = includeDueDate ? TaskflowDate.isoDate(dueDate) : nil
+        let proj = project.trimmingCharacters(in: .whitespaces)
+        Task {
+            let ok = await store.createTask(
+                name: name.trimmingCharacters(in: .whitespaces),
+                status: status, priority: priority,
+                project: proj.isEmpty ? nil : proj,
+                dueDate: due, assignees: Array(assignees))
+            submitting = false
+            if ok { onClose() } else { error = store.errorMessage ?? "Couldn’t create the task." }
+        }
     }
 }

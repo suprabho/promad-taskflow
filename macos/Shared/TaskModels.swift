@@ -63,6 +63,36 @@ struct ProjectGroup: Identifiable, Hashable {
     var id: String { name }
 }
 
+/// A workspace member, for the assignee picker.
+struct TaskUser: Identifiable, Codable, Hashable {
+    let id: String
+    let name: String
+}
+
+/// One selectable option (raw value sent to Supabase + display label).
+struct TaskOption: Identifiable, Hashable {
+    let value: String
+    let label: String
+    var id: String { value }
+}
+
+/// Static option lists for the new-task form.
+enum TaskOptions {
+    static let statuses: [TaskOption] = [
+        .init(value: "todo", label: "To do"),
+        .init(value: "in_progress", label: "In progress"),
+        .init(value: "review", label: "Review"),
+        .init(value: "done", label: "Done"),
+        .init(value: "paused", label: "Paused"),
+    ]
+    static let priorities: [TaskOption] = [
+        .init(value: "low", label: "Low"),
+        .init(value: "medium", label: "Medium"),
+        .init(value: "high", label: "High"),
+        .init(value: "urgent", label: "Urgent"),
+    ]
+}
+
 enum TaskflowDate {
     /// Postgres `date` columns arrive as "yyyy-MM-dd". These are calendar dates
     /// with no timezone, so parse them in the user's *local* calendar at noon —
@@ -77,12 +107,15 @@ enum TaskflowDate {
         return f.date(from: String(s.prefix(10)) + "T12:00")
     }
 
-    static func todayISO(now: Date = Date()) -> String {
+    static func todayISO(now: Date = Date()) -> String { isoDate(now) }
+
+    /// Format a Date as a Postgres `date` string ("yyyy-MM-dd") in local time.
+    static func isoDate(_ date: Date) -> String {
         let f = DateFormatter()
         f.calendar = Calendar(identifier: .gregorian)
         f.locale = Locale(identifier: "en_US_POSIX")
         f.dateFormat = "yyyy-MM-dd"
-        return f.string(from: now)
+        return f.string(from: date)
     }
 }
 

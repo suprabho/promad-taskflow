@@ -12,6 +12,10 @@ final class DayStore: ObservableObject {
     @Published var errorMessage: String?
     @Published var lastUpdated: Date?
 
+    // For the new-task form.
+    @Published var users: [TaskUser] = []
+    @Published var projects: [String] = []
+
     private var allTasks: [TaskItem] = []
 
     var isConfigured: Bool { AppGroupStore.isConfigured }
@@ -47,6 +51,33 @@ final class DayStore: ObservableObject {
             errorMessage = error.localizedDescription
         }
         isLoading = false
+    }
+
+    /// Load users + project suggestions for the new-task form (best effort).
+    func loadFormData() async {
+        guard let service = SupabaseService.fromStore() else { return }
+        async let u = service.fetchUsers()
+        async let p = service.fetchProjects()
+        if let users = try? await u { self.users = users }
+        if let projects = try? await p { self.projects = projects }
+    }
+
+    /// Create a task, then refresh. Returns true on success.
+    func createTask(name: String, status: String, priority: String,
+                    project: String?, dueDate: String?, assignees: [String]) async -> Bool {
+        guard let service = SupabaseService.fromStore() else {
+            errorMessage = "Connect to Supabase first."
+            return false
+        }
+        do {
+            try await service.createTask(name: name, status: status, priority: priority,
+                                         project: project, dueDate: dueDate, assignees: assignees)
+            await refresh()
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
     }
 
     /// Snooze a task for the rest of the day (local only).
