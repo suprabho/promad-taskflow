@@ -11,7 +11,9 @@ extension Notification.Name {
 @main
 struct TaskflowApp: App {
     var body: some Scene {
-        WindowGroup {
+        // A single main window (not WindowGroup) so "Open Taskflow" re-focuses
+        // the existing window instead of spawning duplicates.
+        Window("Taskflow", id: "main") {
             ContentView()
                 .frame(minWidth: 900, minHeight: 600)
         }
@@ -34,6 +36,12 @@ struct TaskflowApp: App {
                     .keyboardShortcut("l", modifiers: .command)
             }
         }
+
+        // Status-bar item: click to see the day's checklist popover.
+        MenuBarExtra("Taskflow", systemImage: "checklist") {
+            MenuBarView()
+        }
+        .menuBarExtraStyle(.window)
     }
 
     private func post(_ name: Notification.Name) {

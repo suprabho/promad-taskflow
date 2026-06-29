@@ -4,10 +4,8 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
-	<!-- Outbound network so the webview can reach your hosted site + Supabase. -->
 	<key>com.apple.security.network.client</key>
 	<true/>
-	<!-- Shared with the widget extension: Supabase config + cached tasks. -->
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.design.promad.taskflow</string>

@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "1D0000000000000000000001"
+               BlueprintIdentifier = "00000000000000000000002F"
                BuildableName = "Taskflow.app"
                BlueprintName = "Taskflow"
                ReferencedContainer = "container:Taskflow.xcodeproj">
@@ -42,7 +42,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "1D0000000000000000000001"
+            BlueprintIdentifier = "00000000000000000000002F"
             BuildableName = "Taskflow.app"
             BlueprintName = "Taskflow"
             ReferencedContainer = "container:Taskflow.xcodeproj">
@@ -59,7 +59,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "1D0000000000000000000001"
+            BlueprintIdentifier = "00000000000000000000002F"
             BuildableName = "Taskflow.app"
             BlueprintName = "Taskflow"
             ReferencedContainer = "container:Taskflow.xcodeproj">

@@ -1,20 +1,37 @@
 #!/usr/bin/env bash
 #
-# Build the Taskflow macOS app from the command line.
-# Run this on a Mac with Xcode (or the Command Line Tools + Xcode) installed.
+# Build the Taskflow macOS app (+ widget extension) from the command line.
+# Run this on a Mac with Xcode 15+ installed.
 #
-# Usage:
-#   ./build.sh                 # Debug build into ./build
-#   ./build.sh release         # Release build into ./build
-#   TASKFLOW_URL=https://...    ./build.sh   # bake a different site URL at build time
+# The app now embeds a WidgetKit extension and uses an App Group, so the build
+# must be SIGNED with your Apple Developer Team (a free Apple ID works for
+# local runs). Pass it via DEVELOPMENT_TEAM:
+#
+#   DEVELOPMENT_TEAM=ABCDE12345 ./build.sh            # Debug
+#   DEVELOPMENT_TEAM=ABCDE12345 ./build.sh release    # Release
+#   TASKFLOW_URL=https://...  DEVELOPMENT_TEAM=...  ./build.sh
+#
+# Find your Team ID: Xcode → Settings → Accounts → (your account) → the 10-char
+# ID in parentheses, or run:  security find-identity -p codesigning -v
+#
+# Easiest path overall: open Taskflow.xcodeproj in Xcode, pick your Team under
+# Signing & Capabilities for BOTH targets, and press ⌘R.
 #
 set -euo pipefail
 cd "$(dirname "$0")"
 
 CONFIG="Debug"
 if [[ "${1:-}" == "release" ]]; then CONFIG="Release"; fi
-
 DERIVED="build"
+
+EXTRA=()
+if [[ -n "${DEVELOPMENT_TEAM:-}" ]]; then
+  EXTRA+=("DEVELOPMENT_TEAM=${DEVELOPMENT_TEAM}")
+else
+  echo "⚠️  DEVELOPMENT_TEAM is not set. Signing an app with an extension +"
+  echo "    App Group requires a team. If this build fails, set DEVELOPMENT_TEAM"
+  echo "    (see the header of this script) or build in Xcode instead."
+fi
 
 echo "▶ Building Taskflow ($CONFIG)…"
 xcodebuild \
@@ -22,9 +39,7 @@ xcodebuild \
   -scheme Taskflow \
   -configuration "$CONFIG" \
   -derivedDataPath "$DERIVED" \
-  CODE_SIGN_IDENTITY="-" \
-  CODE_SIGNING_REQUIRED=NO \
-  CODE_SIGNING_ALLOWED=NO \
+  "${EXTRA[@]}" \
   build
 
 APP_PATH="$DERIVED/Build/Products/$CONFIG/Taskflow.app"

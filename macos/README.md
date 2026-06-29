@@ -1,112 +1,121 @@
 # Taskflow for macOS
 
-A native macOS app that wraps the Taskflow web UI in a `WKWebView`. You get a
-real `.app` — dock icon, menu bar, native window/toolbar, persistent login —
-while reusing the existing Next.js front-end. One codebase, no rewrite.
+A native macOS app for Taskflow with three surfaces:
 
-> Built as a thin native shell. The UI inside the window is the same Taskflow
-> web app, loaded from your deployed site.
+1. **Main window** — your existing Taskflow web UI in a `WKWebView` (dock icon,
+   native window/toolbar, persistent login).
+2. **Menu-bar popover** — click the status-bar checklist icon for a
+   **Today & Overdue** list grouped by Client/Project, with tap-to-check.
+3. **Widget** — a Notification-Center / desktop widget showing the same
+   Today & Overdue checklist, with interactive checkboxes.
 
-## What you get
-
-- Native window with **Back / Forward / Reload** toolbar buttons.
-- Menu commands + shortcuts: Reload (`⌘R`), Home (`⇧⌘H`), Back (`⌘[`),
-  Forward (`⌘]`), **Set Server URL…** (`⌘L`).
-- **Persistent session** — the Supabase login cookie survives quit/relaunch
-  (uses the default persistent `WKWebsiteDataStore`).
-- **Auth that works** — email/password and *Continue with Google* both complete
-  inside the app. Google normally blocks embedded webviews; the app presents a
-  desktop-Safari user agent so the consent screen loads.
-- External (third-party) links open in your real browser, not inside the app.
-- App icon + accent color baked in.
+The window reuses your web front-end. The menu bar and widget read your task
+data **directly from Supabase** (your RLS allows anon read + update), so they
+work without the webview and can refresh on their own.
 
 ## Requirements
 
-- macOS 13 (Ventura) or newer.
-- **Xcode 15+** (or the matching Command Line Tools) — needed to compile Swift.
-  This project can only be *built on a Mac*; the sources here are ready to go.
+- **macOS 14 (Sonoma)** or newer — interactive widgets need it.
+- **Xcode 15+**.
+- A signing **Team** (a free Apple ID works for local runs). The widget
+  extension + App Group must be code-signed; fully-unsigned builds won't work.
 
 ## Quick start
 
 ```bash
 cd macos
-
-# Option A — Xcode UI
-open Taskflow.xcodeproj      # then press ⌘R to build & run
-
-# Option B — command line
-./run.sh                      # build (Debug) + launch
-./run.sh https://taskflow.yourdomain.com   # one-off URL override
+open Taskflow.xcodeproj
 ```
 
-If you only want the built app:
+In Xcode, **once**:
+
+1. Select the **Taskflow** target → *Signing & Capabilities* → choose your Team.
+2. Select the **TaskflowWidgetExtension** target → choose the **same** Team.
+   (Both already declare the `group.design.promad.taskflow` App Group; Xcode
+   provisions it automatically.)
+3. Press **⌘R**.
+
+Then connect your data:
+
+4. Click the **checklist icon** in the menu bar → **Connect to Supabase…**
+5. Paste your **Project URL** and **anon key** (the same public values your web
+   app uses — `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`),
+   confirm the **Workspace ID** (`ws-1` by default), and Save.
+
+The popover fills with today's + overdue tasks grouped by project. To add the
+widget: right-click the desktop → *Edit Widgets* (or Notification Center →
+*Edit Widgets*), find **Taskflow**, and drop it in.
+
+### Command line (optional)
 
 ```bash
-./build.sh release
-open build/Build/Products/Release/Taskflow.app
+DEVELOPMENT_TEAM=ABCDE12345 ./run.sh            # build (Debug) + launch
+DEVELOPMENT_TEAM=ABCDE12345 ./build.sh release  # release build
 ```
 
-## Pointing it at your site
+Find your Team ID in Xcode → Settings → Accounts (10-char ID in parentheses).
 
-The app resolves the URL to load in this order (first non-empty wins):
+## How it works
 
-1. **`TASKFLOW_URL` environment variable** — great for `./run.sh <url>` or an
-   Xcode scheme env var. Build-independent.
-2. **Runtime override** — press `⌘L` in the app, type a URL, Save. Stored in
-   `UserDefaults`, persists across launches.
-3. **`TaskflowURL` key in `Taskflow/Info.plist`** — the value baked into the
-   build. **This is the one to edit for a permanent default.**
-4. Hardcoded fallback in `Taskflow/AppConfig.swift` (`defaultURL`).
+| Surface | Data source | Writes |
+|---|---|---|
+| Main window | Your hosted web app (`TaskflowURL`) | via the web app |
+| Menu-bar popover | Supabase REST (`fetchDayTasks`) | check off → `PATCH status=done` |
+| Widget | Supabase REST + a cached snapshot in the App Group | check off → `ToggleTaskIntent` |
 
-Currently the baked-in default is `https://taskflow.promad.design`. Change it in
-**`Taskflow/Info.plist`** (the `TaskflowURL` string) and/or
-`Taskflow/AppConfig.swift`.
+- **Today & Overdue** = tasks that aren't `done` with a `due_date` of today or
+  earlier, in the configured workspace. Grouping/sorting lives in
+  `Shared/TaskModels.swift` (`DayPlanner`) so the popover and widget always agree.
+- Credentials + a task snapshot are stored in the **App Group**
+  (`group.design.promad.taskflow`), shared between the app and the widget.
+- Checking a task off does an optimistic UI update, then a Supabase `PATCH`, and
+  reloads the widget timelines.
 
-### Local development against `next dev`
+> Note: there are no subtasks in your schema yet, so the native views show
+> Project → Tasks. Grouping is by the `project` text field.
 
-Run the web app (`npm run dev` → `http://localhost:3000`) and launch the Mac app
-pointing at it:
+## Pointing the window at your site
 
-```bash
-./run.sh http://localhost:3000
-```
-
-The entitlements + `NSAllowsLocalNetworking` already permit plain-http
-`localhost`, so no extra config is needed.
-
-## Code signing & distribution
-
-- **Run on your own Mac:** nothing to do — `build.sh` builds unsigned/ad-hoc and
-  Gatekeeper allows locally built apps you launch yourself.
-- **Share with others / notarize:** open the project in Xcode, select the
-  *Taskflow* target → *Signing & Capabilities*, pick your Team, then
-  *Product → Archive* and distribute. The bundle id is `design.promad.taskflow`
-  (change it if you don't own that identifier).
+Separate from Supabase, the **window** loads a web URL, resolved in this order:
+`TASKFLOW_URL` env → in-app override (⌘L) → `TaskflowURL` in
+`Taskflow/Info.plist` → `defaultURL` in `Taskflow/AppConfig.swift`. Edit
+`Info.plist` for a permanent default. For local dev: `./run.sh http://localhost:3000`.
 
 ## Project layout
 
 ```
 macos/
-├── Taskflow.xcodeproj/          # Xcode project (+ shared scheme)
-├── Taskflow/
-│   ├── TaskflowApp.swift        # @main App + menu commands
-│   ├── ContentView.swift        # SwiftUI chrome, toolbar, error + URL sheet
-│   ├── WebView.swift            # WKWebView bridge + navigation policy
-│   ├── AppConfig.swift          # URL resolution, user agent, auth-host rules
-│   ├── Info.plist               # TaskflowURL default + ATS
-│   ├── Taskflow.entitlements    # sandbox + outbound network
-│   └── Assets.xcassets/         # AppIcon + AccentColor
-├── build.sh                     # xcodebuild → ./build
-└── run.sh                       # build + open
+├── Taskflow.xcodeproj/          # 2 targets: Taskflow (app) + TaskflowWidgetExtension
+├── Shared/                      # compiled into BOTH targets
+│   ├── TaskModels.swift         # TaskItem, ProjectGroup, DayPlanner (filter/group)
+│   ├── SupabaseService.swift    # PostgREST read/update client
+│   ├── AppGroupStore.swift      # shared config + task snapshot
+│   └── ToggleTaskIntent.swift   # App Intent powering widget check-offs
+├── Taskflow/                    # app target
+│   ├── TaskflowApp.swift        # WindowGroup + MenuBarExtra + commands
+│   ├── ContentView.swift / WebView.swift / AppConfig.swift   # web window
+│   ├── DayStore.swift           # popover view-model
+│   ├── MenuBarView.swift        # the popover UI
+│   ├── ConnectSupabaseForm.swift
+│   ├── Info.plist / Taskflow.entitlements (app group + network)
+│   └── Assets.xcassets/
+├── TaskflowWidget/              # widget extension target
+│   ├── TaskflowWidgetBundle.swift / TaskflowWidget.swift
+│   ├── Info.plist (WidgetKit) / TaskflowWidget.entitlements
+├── build.sh / run.sh
 ```
 
-## Notes / limitations
+## Troubleshooting
 
-- This is a *web wrapper*, so it needs your Taskflow site to be reachable
-  (hosted, or `next dev` running locally). It is not an offline native rewrite.
-- The app icon is generated programmatically (indigo→violet checklist motif).
-  Drop your own PNGs into `Assets.xcassets/AppIcon.appiconset/` to replace it.
-- Native desktop notifications for task activity aren't wired up yet — the web
-  app's in-page notification bell still works inside the window. Ask if you want
-  true macOS notifications via `UNUserNotificationCenter`.
+- **"Couldn't load tasks" in the popover** — check the URL/anon key via
+  *Connect to Supabase…*. The anon key is the long `eyJ…` JWT, not the service
+  key. Make sure the Workspace ID matches your data (`ws-1` for the seed data).
+- **Widget shows "Connect Taskflow"** — the App Group isn't shared yet. Confirm
+  both targets use the same Team and the same App Group, then launch the app
+  once and connect.
+- **Signing errors on the extension** — the extension's bundle id must stay a
+  child of the app's (`design.promad.taskflow.TaskflowWidget`). Pick the same
+  Team for both targets.
+- **Nothing in the list** — you may simply have nothing due today/overdue. The
+  popover header shows the open count; "All clear" means you're caught up.
 ```
