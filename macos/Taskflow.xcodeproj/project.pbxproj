@@ -1,0 +1,463 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		000000000000000000000015 /* TaskModels.swift in Sources(App) */ = {isa = PBXBuildFile; fileRef = 000000000000000000000001 /* TaskModels.swift */; };
+		000000000000000000000016 /* AppGroupStore.swift in Sources(App) */ = {isa = PBXBuildFile; fileRef = 000000000000000000000002 /* AppGroupStore.swift */; };
+		000000000000000000000017 /* SupabaseService.swift in Sources(App) */ = {isa = PBXBuildFile; fileRef = 000000000000000000000003 /* SupabaseService.swift */; };
+		000000000000000000000018 /* ToggleTaskIntent.swift in Sources(App) */ = {isa = PBXBuildFile; fileRef = 000000000000000000000004 /* ToggleTaskIntent.swift */; };
+		000000000000000000000019 /* TaskflowApp.swift in Sources(App) */ = {isa = PBXBuildFile; fileRef = 000000000000000000000005 /* TaskflowApp.swift */; };
+		00000000000000000000001A /* ContentView.swift in Sources(App) */ = {isa = PBXBuildFile; fileRef = 000000000000000000000006 /* ContentView.swift */; };
+		00000000000000000000001B /* WebView.swift in Sources(App) */ = {isa = PBXBuildFile; fileRef = 000000000000000000000007 /* WebView.swift */; };
+		00000000000000000000001C /* AppConfig.swift in Sources(App) */ = {isa = PBXBuildFile; fileRef = 000000000000000000000008 /* AppConfig.swift */; };
+		00000000000000000000001D /* DayStore.swift in Sources(App) */ = {isa = PBXBuildFile; fileRef = 000000000000000000000009 /* DayStore.swift */; };
+		00000000000000000000001E /* MenuBarView.swift in Sources(App) */ = {isa = PBXBuildFile; fileRef = 00000000000000000000000A /* MenuBarView.swift */; };
+		00000000000000000000001F /* ConnectSupabaseForm.swift in Sources(App) */ = {isa = PBXBuildFile; fileRef = 00000000000000000000000B /* ConnectSupabaseForm.swift */; };
+		000000000000000000000020 /* Assets.xcassets in Resources(App) */ = {isa = PBXBuildFile; fileRef = 00000000000000000000000E /* Assets.xcassets */; };
+		000000000000000000000021 /* TaskModels.swift in Sources(Widget) */ = {isa = PBXBuildFile; fileRef = 000000000000000000000001 /* TaskModels.swift */; };
+		000000000000000000000022 /* AppGroupStore.swift in Sources(Widget) */ = {isa = PBXBuildFile; fileRef = 000000000000000000000002 /* AppGroupStore.swift */; };
+		000000000000000000000023 /* SupabaseService.swift in Sources(Widget) */ = {isa = PBXBuildFile; fileRef = 000000000000000000000003 /* SupabaseService.swift */; };
+		000000000000000000000024 /* ToggleTaskIntent.swift in Sources(Widget) */ = {isa = PBXBuildFile; fileRef = 000000000000000000000004 /* ToggleTaskIntent.swift */; };
+		000000000000000000000025 /* TaskflowWidgetBundle.swift in Sources(Widget) */ = {isa = PBXBuildFile; fileRef = 00000000000000000000000C /* TaskflowWidgetBundle.swift */; };
+		000000000000000000000026 /* TaskflowWidget.swift in Sources(Widget) */ = {isa = PBXBuildFile; fileRef = 00000000000000000000000D /* TaskflowWidget.swift */; };
+		000000000000000000000027 /* TaskflowWidget.appex in Embed */ = {isa = PBXBuildFile; fileRef = 000000000000000000000014 /* TaskflowWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		000000000000000000000037 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000041 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 000000000000000000000030;
+			remoteInfo = TaskflowWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		00000000000000000000002B /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				000000000000000000000027 /* TaskflowWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		000000000000000000000001 /* TaskModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskModels.swift; sourceTree = "<group>"; };
+		000000000000000000000002 /* AppGroupStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupStore.swift; sourceTree = "<group>"; };
+		000000000000000000000003 /* SupabaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseService.swift; sourceTree = "<group>"; };
+		000000000000000000000004 /* ToggleTaskIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToggleTaskIntent.swift; sourceTree = "<group>"; };
+		000000000000000000000005 /* TaskflowApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskflowApp.swift; sourceTree = "<group>"; };
+		000000000000000000000006 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		000000000000000000000007 /* WebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebView.swift; sourceTree = "<group>"; };
+		000000000000000000000008 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		000000000000000000000009 /* DayStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayStore.swift; sourceTree = "<group>"; };
+		00000000000000000000000A /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		00000000000000000000000B /* ConnectSupabaseForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectSupabaseForm.swift; sourceTree = "<group>"; };
+		00000000000000000000000C /* TaskflowWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskflowWidgetBundle.swift; sourceTree = "<group>"; };
+		00000000000000000000000D /* TaskflowWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskflowWidget.swift; sourceTree = "<group>"; };
+		00000000000000000000000E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		00000000000000000000000F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		000000000000000000000010 /* Taskflow.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Taskflow.entitlements; sourceTree = "<group>"; };
+		000000000000000000000011 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		000000000000000000000012 /* TaskflowWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TaskflowWidget.entitlements; sourceTree = "<group>"; };
+		000000000000000000000013 /* Taskflow.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Taskflow.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000014 /* TaskflowWidget.appex */ = {isa = PBXFileReference; explicitFileType = wrapper.app-extension; includeInIndex = 0; path = TaskflowWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		000000000000000000000029 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		00000000000000000000002D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		000000000000000000000031 = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000032 /* Taskflow */,
+				000000000000000000000033 /* Shared */,
+				000000000000000000000034 /* TaskflowWidget */,
+				000000000000000000000035 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		000000000000000000000032 /* Taskflow */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000005 /* TaskflowApp.swift */,
+				000000000000000000000006 /* ContentView.swift */,
+				000000000000000000000007 /* WebView.swift */,
+				000000000000000000000008 /* AppConfig.swift */,
+				000000000000000000000009 /* DayStore.swift */,
+				00000000000000000000000A /* MenuBarView.swift */,
+				00000000000000000000000B /* ConnectSupabaseForm.swift */,
+				00000000000000000000000E /* Assets.xcassets */,
+				00000000000000000000000F /* Info.plist */,
+				000000000000000000000010 /* Taskflow.entitlements */,
+			);
+			path = Taskflow;
+			sourceTree = "<group>";
+		};
+		000000000000000000000033 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000001 /* TaskModels.swift */,
+				000000000000000000000002 /* AppGroupStore.swift */,
+				000000000000000000000003 /* SupabaseService.swift */,
+				000000000000000000000004 /* ToggleTaskIntent.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		000000000000000000000034 /* TaskflowWidget */ = {
+			isa = PBXGroup;
+			children = (
+				00000000000000000000000C /* TaskflowWidgetBundle.swift */,
+				00000000000000000000000D /* TaskflowWidget.swift */,
+				000000000000000000000011 /* Info.plist */,
+				000000000000000000000012 /* TaskflowWidget.entitlements */,
+			);
+			path = TaskflowWidget;
+			sourceTree = "<group>";
+		};
+		000000000000000000000035 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000013 /* Taskflow.app */,
+				000000000000000000000014 /* TaskflowWidget.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		00000000000000000000002F /* Taskflow */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 000000000000000000000039 /* Build configuration list for PBXNativeTarget "Taskflow" */;
+			buildPhases = (
+				000000000000000000000028 /* Sources */,
+				000000000000000000000029 /* Frameworks */,
+				00000000000000000000002A /* Resources */,
+				00000000000000000000002B /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				000000000000000000000036 /* PBXTargetDependency */,
+			);
+			name = Taskflow;
+			productName = Taskflow;
+			productReference = 000000000000000000000013 /* Taskflow.app */;
+			productType = "com.apple.product-type.application";
+		};
+		000000000000000000000030 /* TaskflowWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 00000000000000000000003A /* Build configuration list for PBXNativeTarget "TaskflowWidgetExtension" */;
+			buildPhases = (
+				00000000000000000000002C /* Sources */,
+				00000000000000000000002D /* Frameworks */,
+				00000000000000000000002E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TaskflowWidgetExtension;
+			productName = TaskflowWidget;
+			productReference = 000000000000000000000014 /* TaskflowWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		000000000000000000000041 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1520;
+				LastUpgradeCheck = 1520;
+				TargetAttributes = {
+					00000000000000000000002F = {CreatedOnToolsVersion = 15.2;};
+					000000000000000000000030 = {CreatedOnToolsVersion = 15.2;};
+				};
+			};
+			buildConfigurationList = 000000000000000000000038 /* Build configuration list for PBXProject "Taskflow" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 000000000000000000000031;
+			productRefGroup = 000000000000000000000035 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				00000000000000000000002F /* Taskflow */,
+				000000000000000000000030 /* TaskflowWidgetExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		00000000000000000000002A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				000000000000000000000020 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		00000000000000000000002E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		000000000000000000000028 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				000000000000000000000015 /* TaskModels.swift in Sources */,
+				000000000000000000000016 /* AppGroupStore.swift in Sources */,
+				000000000000000000000017 /* SupabaseService.swift in Sources */,
+				000000000000000000000018 /* ToggleTaskIntent.swift in Sources */,
+				000000000000000000000019 /* TaskflowApp.swift in Sources */,
+				00000000000000000000001A /* ContentView.swift in Sources */,
+				00000000000000000000001B /* WebView.swift in Sources */,
+				00000000000000000000001C /* AppConfig.swift in Sources */,
+				00000000000000000000001D /* DayStore.swift in Sources */,
+				00000000000000000000001E /* MenuBarView.swift in Sources */,
+				00000000000000000000001F /* ConnectSupabaseForm.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		00000000000000000000002C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				000000000000000000000021 /* TaskModels.swift in Sources */,
+				000000000000000000000022 /* AppGroupStore.swift in Sources */,
+				000000000000000000000023 /* SupabaseService.swift in Sources */,
+				000000000000000000000024 /* ToggleTaskIntent.swift in Sources */,
+				000000000000000000000025 /* TaskflowWidgetBundle.swift in Sources */,
+				000000000000000000000026 /* TaskflowWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		000000000000000000000036 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 000000000000000000000030 /* TaskflowWidgetExtension */;
+			targetProxy = 000000000000000000000037 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		00000000000000000000003B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		00000000000000000000003C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		00000000000000000000003D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Taskflow/Taskflow.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Taskflow/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = design.promad.taskflow;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		00000000000000000000003E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Taskflow/Taskflow.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Taskflow/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = design.promad.taskflow;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+		00000000000000000000003F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = TaskflowWidget/TaskflowWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TaskflowWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Taskflow;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = design.promad.taskflow.TaskflowWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		000000000000000000000040 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = TaskflowWidget/TaskflowWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TaskflowWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Taskflow;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = design.promad.taskflow.TaskflowWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		000000000000000000000038 /* Build configuration list for PBXProject "Taskflow" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00000000000000000000003B /* Debug */,
+				00000000000000000000003C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		000000000000000000000039 /* Build configuration list for PBXNativeTarget "Taskflow" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00000000000000000000003D /* Debug */,
+				00000000000000000000003E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		00000000000000000000003A /* Build configuration list for PBXNativeTarget "TaskflowWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00000000000000000000003F /* Debug */,
+				000000000000000000000040 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 000000000000000000000041 /* Project object */;
+}
