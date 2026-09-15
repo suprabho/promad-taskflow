@@ -228,6 +228,7 @@ export function TaskBoard() {
               tasks={col.tasks}
               isCollapsed={collapsed.has(col.id)}
               onToggleCollapse={() => toggleCollapse(col.id)}
+              showTaskStatus={groupBy !== "status"}
             />
           ))}
         </div>
