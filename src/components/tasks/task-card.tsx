@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Task } from "@/types/task";
-import { PriorityBadge, TypeBadge } from "@/components/ui/badge";
+import { PriorityBadge, StatusBadge, TypeBadge } from "@/components/ui/badge";
 import { AvatarGroup } from "@/components/ui/avatar";
 import { useTaskStore } from "@/store/task-store";
 import { CalendarBlank } from "@phosphor-icons/react";
@@ -14,7 +14,14 @@ function formatDate(dateStr: string | null) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export function TaskCard({ task }: { task: Task }) {
+export function TaskCard({
+  task,
+  showStatus = false,
+}: {
+  task: Task;
+  // Redundant when the board is grouped by status — the column already says it.
+  showStatus?: boolean;
+}) {
   const { openDetail, getUserById } = useTaskStore();
   const {
     attributes,
@@ -52,6 +59,7 @@ export function TaskCard({ task }: { task: Task }) {
       </p>
 
       <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+        {showStatus && <StatusBadge status={task.status} />}
         <PriorityBadge priority={task.priority} />
         <TypeBadge type={task.task_type} />
       </div>

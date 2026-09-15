@@ -16,6 +16,7 @@ export function BoardColumn({
   tasks,
   isCollapsed,
   onToggleCollapse,
+  showTaskStatus = false,
 }: {
   id: string;
   label: string;
@@ -23,6 +24,7 @@ export function BoardColumn({
   tasks: Task[];
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  showTaskStatus?: boolean;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id });
 
@@ -69,7 +71,7 @@ export function BoardColumn({
             strategy={verticalListSortingStrategy}
           >
             {tasks.map((task) => (
-              <TaskCard key={task.id} task={task} />
+              <TaskCard key={task.id} task={task} showStatus={showTaskStatus} />
             ))}
           </SortableContext>
         </div>
